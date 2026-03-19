@@ -1,44 +1,49 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
 import type { Pet } from '@/types'
 
-interface PetCardProps {
-  pet: Pet
-}
+interface PetCardProps { pet: Pet }
 
 export default function PetCard({ pet }: PetCardProps) {
-  const statusLabel =
-    pet.status === 'Available'  ? '● Available'   :
-    pet.status === 'Adopted'    ? '✓ Adopted'      :
-                                  '⏳ In Process'
-
-  const statusClass =
-    pet.status === 'Available'  ? 'available' :
-    pet.status === 'Adopted'    ? 'adopted'   :
-                                  'process'
+  const [fav, setFav] = useState(false)
 
   return (
-    <Link href={`/pets/${pet.id}`} style={{ textDecoration: 'none' }}>
-      <div className="pet-card">
+    <div className="pet-card">
+      <Link href={`/pets/${pet.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="pet-card-img-wrap">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={pet.img}
-            alt={pet.name}
-            className="pet-card-img"
-            loading="lazy"
-          />
-          <span className="pet-card-badge">{pet.type}</span>
-          <span className={`pet-card-status ${statusClass}`}>{statusLabel}</span>
+          <img src={pet.img} alt={pet.name} className="pet-card-img" loading="lazy" />
         </div>
-        <div className="pet-card-body">
-          <div className="pet-card-name">{pet.name}</div>
-          <div className="pet-card-meta">
-            <span style={{ marginRight: '4px' }}>{pet.age}</span>
-            <span style={{ color: 'var(--text-dim)' }}>•</span>
-            <span style={{ marginLeft: '4px' }}>{pet.location}</span>
-          </div>
+      </Link>
+      <div className="pet-card-body">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Link href={`/pets/${pet.id}`} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+            <div className="pet-card-name">{pet.name}</div>
+            <div className="pet-card-meta">
+              {pet.age}
+              <span style={{ margin: '0 3px', color: 'var(--text-dim)' }}>·</span>
+              📍 {pet.location}
+            </div>
+          </Link>
+          {/* Heart icon — 4 states from Figma: default, hover, active, muted */}
+          <button
+            className="pet-card-fav"
+            onClick={e => { e.preventDefault(); setFav(v => !v) }}
+            style={{
+              marginLeft: '8px', flexShrink: 0,
+              background: fav ? 'rgba(239,68,68,0.08)' : '#fff',
+              border: fav ? '1px solid rgba(239,68,68,0.25)' : '1px solid var(--border)',
+            }}
+            aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <span style={{ fontSize: '1rem', color: fav ? '#ef4444' : '#9ca3af' }}>
+              {fav ? '❤️' : '🤍'}
+            </span>
+          </button>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }

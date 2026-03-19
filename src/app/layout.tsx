@@ -5,15 +5,11 @@ import { ToastProvider } from '@/context/ToastContext'
 import Navbar from '@/components/layout/Navbar'
 
 export const metadata: Metadata = {
-  title: 'PetPALS - Platform Adopsi Hewan',
+  title: 'PetPals - Platform Adopsi Hewan',
   description: 'Temukan sahabat berbulu impianmu dan berikan mereka rumah yang penuh kasih.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
       <body>

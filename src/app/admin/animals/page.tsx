@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { PETS as INITIAL_PETS } from '@/lib/data'
 import type { Pet, PetStatus, PetType } from '@/types'
 import { useToast } from '@/context/ToastContext'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 export default function AdminAnimalsPage() {
   const { showToast } = useToast()
@@ -182,24 +183,14 @@ export default function AdminAnimalsPage() {
         </div>
       )}
 
-      {/* Delete Confirm */}
+      {/* Delete Confirm Modal */}
       {deleteId !== null && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-2)', borderRadius: '16px', padding: '28px', maxWidth: '360px', width: '100%', textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🗑️</div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--white)', marginBottom: '8px' }}>Hapus hewan ini?</h3>
-            <p style={{ fontSize: '.875rem', color: 'var(--text-muted)', marginBottom: '20px' }}>Tindakan ini tidak bisa dibatalkan.</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button className="btn btn-secondary" onClick={() => setDeleteId(null)}>Batal</button>
-              <button
-                style={{ padding: '11px 22px', borderRadius: '10px', background: 'rgba(248,113,113,.15)', color: 'var(--red)', border: '1px solid rgba(248,113,113,.3)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: '.9rem' }}
-                onClick={() => handleDelete(deleteId)}
-              >
-                Ya, Hapus
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="Hapus Hewan"
+          message="Apakah kamu yakin ingin menghapus data hewan ini? Tindakan ini tidak bisa dibatalkan."
+          onConfirm={() => handleDelete(deleteId)}
+          onCancel={() => setDeleteId(null)}
+        />
       )}
     </>
   )
