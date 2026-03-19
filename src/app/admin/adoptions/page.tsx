@@ -1,0 +1,154 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import type { Adoption, AdoptionStatus } from '@/types'
+import { useToast } from '@/context/ToastContext'
+
+export default function AdminAdoptionsPage() {
+  const { showToast } = useToast()
+  const [apps, setApps]       = useState<Adoption[]>([])
+  const [filter, setFilter]   = useState<'All' | AdoptionStatus>('All')
+  const [selected, setSelected] = useState<Adoption | null>(null)
+
+  useEffect(() => {
+    try { setApps(JSON.parse(localStorage.getItem('pp_apps') || '[]')) } catch {}
+  }, [])
+
+  const save = (updated: Adoption[]) => {
+    setApps(updated)
+    try { localStorage.setItem('pp_apps', JSON.stringify(updated)) } catch {}
+  }
+
+  const updateStatus = (id: number | string, status: AdoptionStatus) => {
+    const updated = apps.map(a => a.id === id ? { ...a, status } : a)
+    save(updated)
+    setSelected(prev => prev?.id === id ? { ...prev, status } : prev)
+    showToast(`Pengajuan ${status === 'Approved' ? 'disetujui ✅' : 'ditolak ❌'}.`, status === 'Approved' ? 'ok' : 'err')
+  }
+
+  const filtered = filter === 'All' ? apps : apps.filter(a => a.status === filter)
+
+  const FILTERS: { label: string; value: 'All' | AdoptionStatus }[] = [
+    { label: 'All',      value: 'All'      },
+    { label: 'Pending',  value: 'Pending'  },
+    { label: 'Approved', value: 'Approved' },
+    { label: 'Rejected', value: 'Rejected' },
+  ]
+
+  const statusStyle = (s: string) => {
+    if (s === 'Approved') return { color: 'var(--teal)',   bg: 'var(--teal-pale)',          border: 'rgba(74,222,128,.2)'  }
+    if (s === 'Rejected') return { color: 'var(--red)',    bg: 'rgba(248,113,113,.1)',       border: 'rgba(248,113,113,.2)' }
+    return                       { color: 'var(--yellow)', bg: 'rgba(251,191,36,.1)',        border: 'rgba(251,191,36,.2)'  }
+  }
+
+  return (
+    <>
+      <div style={{ marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--white)', letterSpacing: '-0.03em', marginBottom: '4px' }}>Adoptions</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '.875rem' }}>{apps.length} total pengajuan</p>
+      </div>
+
+      {/* Filter pills */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        {FILTERS.map(f => (
+          <button key={f.value} className={`pill ${filter === f.value ? 'active' : ''}`} onClick={() => setFilter(f.value)}>
+            {f.label}
+            <span style={{ marginLeft: '6px', padding: '1px 7px', borderRadius: '20px', background: 'rgba(255,255,255,.07)', fontSize: '.72rem' }}>
+              {f.value === 'All' ? apps.length : apps.filter(a => a.status === f.value).length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty">
+          <span className="empty-icon">📋</span>
+          <h3>Tidak ada pengajuan</h3>
+          <p>Belum ada pengajuan adopsi dengan status ini.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {filtered.map(app => {
+            const st = statusStyle(app.status)
+            return (
+              <div
+                key={app.id}
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px 20px', display: 'grid', gridTemplateColumns: '56px 1fr auto auto', gap: '14px', alignItems: 'center', cursor: 'pointer', transition: 'border-color .18s' }}
+                onClick={() => setSelected(app)}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-2)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={app.petImg} alt={app.petName} style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }} />
+                <div>
+                  <div style={{ fontSize: '.9rem', fontWeight: 700, color: 'var(--white)', marginBottom: '3px' }}>{app.petName}</div>
+                  <div style={{ fontSize: '.78rem', color: 'var(--text-muted)' }}>
+                    Housing: {app.housing} • {new Date(app.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+                <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '.75rem', fontWeight: 700, color: st.color, background: st.bg, border: `1px solid ${st.border}`, whiteSpace: 'nowrap' }}>
+                  {app.status}
+                </span>
+                {app.status === 'Pending' && (
+                  <div style={{ display: 'flex', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                    <button
+                      style={{ padding: '6px 14px', borderRadius: '8px', background: 'var(--teal-pale)', color: 'var(--teal)', border: '1px solid rgba(74,222,128,.25)', fontWeight: 600, fontSize: '.78rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                      onClick={() => updateStatus(app.id, 'Approved')}
+                    >✅ Approve</button>
+                    <button
+                      style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(248,113,113,.08)', color: 'var(--red)', border: '1px solid rgba(248,113,113,.25)', fontWeight: 600, fontSize: '.78rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                      onClick={() => updateStatus(app.id, 'Rejected')}
+                    >❌ Reject</button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {selected && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(4px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setSelected(null)}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-2)', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--white)' }}>Detail Pengajuan</h2>
+              <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }} onClick={() => setSelected(null)}>✕</button>
+            </div>
+            <div style={{ display: 'flex', gap: '14px', marginBottom: '20px' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={selected.petImg} alt={selected.petName} style={{ width: '72px', height: '72px', borderRadius: '10px', objectFit: 'cover' }} />
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--white)', marginBottom: '4px' }}>{selected.petName}</div>
+                <div style={{ fontSize: '.8rem', color: 'var(--text-muted)' }}>{selected.petBreed}</div>
+                <div style={{ fontSize: '.78rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                  {new Date(selected.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
+            {[
+              ['Housing',      selected.housing],
+              ['Other Pets',   selected.otherPets],
+              ['Motivation',   selected.motivation],
+              ...(selected.experience ? [['Experience', selected.experience]] : []),
+            ].map(([k, v]) => (
+              <div key={k} style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '4px' }}>{k}</div>
+                <div style={{ fontSize: '.875rem', color: 'var(--text)', lineHeight: '1.6' }}>{v}</div>
+              </div>
+            ))}
+            {selected.status === 'Pending' && (
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => updateStatus(selected.id, 'Approved')}>✅ Approve</button>
+                <button
+                  style={{ flex: 1, padding: '11px', borderRadius: '10px', background: 'rgba(248,113,113,.1)', color: 'var(--red)', border: '1px solid rgba(248,113,113,.25)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: '.9rem' }}
+                  onClick={() => updateStatus(selected.id, 'Rejected')}
+                >❌ Reject</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
