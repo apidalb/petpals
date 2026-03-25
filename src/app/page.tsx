@@ -150,7 +150,6 @@ export default function HomePage() {
         </section>
 
         {/* ── WHY ADOPT ── */}
-        {/* ── WHY ADOPT ── */}
            <div className="why-section">
             <h2 className="section-title why-title">Why adopt from us? </h2>
 
