@@ -4,14 +4,14 @@ export default function ContactPage() {
   return (
     <>
       <div className="page-wrapper">
-        <div style={{ padding: '0 24px 48px' }}>
-          <div style={{ background: 'var(--bg-gray)', borderRadius: '16px', padding: '24px' }}>
+        <div style={{ padding: '0 60px 48px' }}>
+          <div style={{ background: '#dcdcdc', borderRadius: '16px', padding: '70px' }}>
             <div className="contact-card">
               {/* Hero */}
               <div className="contact-hero">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1200&q=80"
+                  src="/contacts-banner.jpg"
                   alt="Contact"
                 />
                 <div className="contact-hero-overlay">

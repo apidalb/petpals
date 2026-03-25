@@ -4,8 +4,8 @@ export default function AboutPage() {
   return (
     <>
       <div className="page-wrapper">
-        <div style={{ background: 'var(--bg)', padding: '0 24px 48px' }}>
-          <div style={{ background: 'var(--bg-gray)', borderRadius: '16px', padding: '24px' }}>
+        <div style={{ background: 'var(--bg)', padding: '0 60px 48px' }}>
+          <div style={{ background: '#dcdcdc', borderRadius: '16px', padding: '70px' }}>
             <div className="about-card">
               <div className="about-header">
                 <h1>About Us</h1>

@@ -37,7 +37,7 @@ export default function RegisterPage() {
         <div className="auth-form-wrap">
           <div className="auth-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
+            <img src="/logo-petpals-black.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
           </div>
           <h1 className="auth-h" style={{ fontSize: '.95rem', fontWeight: 500, color: 'var(--text-2)', marginBottom: '20px' }}>
             Create an account to run wild through our curated experiences.

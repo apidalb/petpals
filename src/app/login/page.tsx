@@ -39,17 +39,15 @@ export default function LoginPage() {
     <>
     <div className="auth-layout">
     <div className="auth-form-side">
-      <div className="container">
-        <div className="auth-form-wrap">
-      {/* Form side */}
-      <div className="auth-form-side">
+      <div className="auth-form-wrap">
+          {/* Form side */}
+      
           <div className="auth-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
+            <img src="/logo-petpals-black.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
           </div>
-          </div>
-          </div>
-          </div>
+          
+          
           <h1 className="auth-h">Sign in to your account</h1>
 
           {error && <div className="alert alert-err">{error}</div>}
@@ -67,26 +65,29 @@ export default function LoginPage() {
             <button type="submit" className="btn btn-dark btn-full" style={{ marginBottom: '14px' }} disabled={loading}>
               {loading ? 'Signing in…' : 'Log In'}
             </button>
-            <div className="f-check" style={{ justifyContent: 'flex-start' }}>
+
+          </form>
+
+            <div className="auth-extra">
+            <div className="f-check">
               <input type="checkbox" id="remember" />
               <label htmlFor="remember">Remember me for 30 days</label>
             </div>
-          </form>
-
+          
           <div style={{ textAlign: 'center', margin: '8px 0' }}>
             <Link href="/forgot-password" style={{ fontSize: '.82rem', color: 'var(--text-muted)' }}>Forgot Password?</Link>
           </div>
           <div className="auth-switch">
             You do not have account yet? <Link href="/register">Sign In</Link>
           </div>
-
+         </div>
+         </div>
           {/* Demo hint */}
           <div style={{ marginTop: '20px', padding: '12px', background: 'var(--bg-gray)', borderRadius: '8px', fontSize: '.75rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
             <strong style={{ color: 'var(--text-2)' }}>Demo:</strong><br />
             Admin: admin@petpals.id / admin123<br />
             User: budi@gmail.com / user123
           </div>
-        
       </div>
 
       {/* Image side */}
