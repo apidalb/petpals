@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import Footer from '@/components/layout/Footer'
 
 const DEMO_USERS = [
   { email: 'admin@petpals.id', password: 'admin123', name: 'Admin PetPALS', role: 'admin'    as const },
@@ -35,13 +36,20 @@ export default function LoginPage() {
   }
 
   return (
+    <>
     <div className="auth-layout">
+    <div className="auth-form-side">
+      <div className="container">
+        <div className="auth-form-wrap">
       {/* Form side */}
       <div className="auth-form-side">
         <div className="auth-form-wrap">
           <div className="auth-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
+          </div>
+          </div>
+          </div>
           </div>
           <h1 className="auth-h">Sign in to your account</h1>
 
@@ -85,8 +93,12 @@ export default function LoginPage() {
       {/* Image side */}
       <div className="auth-img-side">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=85" alt="" />
+        <img src="/login-dog.png" alt="Dog" />
       </div>
     </div>
+
+      <Footer />
+
+    </>
   )
 }

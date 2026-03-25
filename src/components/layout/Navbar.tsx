@@ -47,59 +47,53 @@ export default function Navbar() {
     ?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?'
 
   return (
-    <nav className={`navbar${navHidden ? ' hidden' : ''}`}>
+    <nav className="navbar">
       <div className="nav-inner">
 
-        {/* Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0, textDecoration: 'none' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="PetPals" style={{ height: '48px', width: 'auto', display: 'block' }} />
-        </Link>
+        {/* LEFT - LOGO */}
+        <div className="nav-left">
+          <Link href="/">
+            <img src="/logo.png" alt="PetPals" />
+          </Link>
+        </div>
 
-        {/* Nav Links */}
-        <ul className="nav-links" style={{ display: 'flex' }}>
-          {navLinks.map(l => (
-            <li key={l.href}>
-              <Link href={l.href} className={`nav-link ${pathname === l.href ? 'active' : ''}`}>
-                {l.label}
+        {/* CENTER - MENU */}
+        <ul className="nav-links">
+          {navLinks.map(link => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className={`nav-link ${pathname === link.href || pathname.startsWith(link.href + '/')
+                ? 'active'
+                : ''}`}
+              >
+                {link.label}
               </Link>
             </li>
           ))}
-          {user && (
-            <li>
-              <Link href="/my-applications" className={`nav-link ${pathname === '/my-applications' ? 'active' : ''}`}>
-                My Apps
-              </Link>
-            </li>
-          )}
-          {user?.role === 'admin' && (
-            <li>
-              <Link href="/admin" className={`nav-link ${pathname.startsWith('/admin') ? 'active' : ''}`}>
-                Admin
-              </Link>
-            </li>
-          )}
         </ul>
 
-        {/* Auth */}
+        {/* RIGHT - AUTH */}
         <div className="nav-auth">
           {user ? (
-            <div className="nav-user-wrap" onBlur={() => setTimeout(() => setDropOpen(false), 150)}>
-              <button className="nav-user-pill" onClick={() => setDropOpen(v => !v)}>
+            <div className="nav-user-wrap">
+              <button
+                className="nav-user-pill"
+                onClick={() => setDropOpen(prev => !prev)}
+              >
                 <div className="u-av">{initials}</div>
                 <span>{user.name.split(' ')[0]}</span>
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '.7rem' }}>▾</span>
+                <span className="arrow">▾</span>
               </button>
+
               {dropOpen && (
                 <div className="nav-drop">
-                  <div style={{ padding: '8px 12px 4px', fontSize: '.75rem', color: 'var(--text-dim)' }}>
-                    {user.email}
-                  </div>
-                  <hr className="drop-sep" />
-                  <Link href="/my-applications" className="drop-item" onClick={() => setDropOpen(false)}>
+                  <div className="drop-email">{user.email}</div>
+
+                  <Link href="/my-applications" className="drop-item">
                     📋 My Applications
                   </Link>
-                  <hr className="drop-sep" />
+
                   <button className="drop-item danger" onClick={handleLogout}>
                     🚪 Logout
                   </button>
@@ -108,11 +102,16 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login"    className="btn-login">Login</Link>
-              <Link href="/register" className="btn-register">Register</Link>
+              <Link href="/login" className="btn-login">
+                Login
+              </Link>
+              <Link href="/register" className="btn-register">
+                Register
+              </Link>
             </>
           )}
         </div>
+
       </div>
     </nav>
   )
