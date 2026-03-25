@@ -29,6 +29,8 @@ export default function PetsPage() {
   return (
     <>
       <div className="page-wrapper">
+        <div style={{ background: 'var(--bg)', padding: '0 60px 48px' }}>
+        
         <div className="pets-layout">
           {/* ── Sidebar ── */}
           <aside className="pets-sidebar">
@@ -81,6 +83,8 @@ export default function PetsPage() {
           </div>
         </div>
       </div>
+      </div>
+      
       <Footer />
     </>
   )

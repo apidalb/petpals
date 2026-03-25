@@ -10,7 +10,7 @@ export default function Footer() {
               {/* mix-blend-mode:multiply removes black background on white footer */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logo.png"
+                src="/logo-petpals-black.png"
                 alt="PetPals"
                 style={{ height: '44px', width: 'auto', mixBlendMode: 'multiply' }}
               />

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { PETS } from '@/lib/data'
 import Footer from '@/components/layout/Footer'
+import { relative } from 'path';
 
 // Simple card for home page — NO heart icon
 function HomePetCard({ pet }: { pet: { id: number; name: string; age: string; location: string; img: string } }) {
@@ -89,11 +90,16 @@ export default function HomePage() {
         <div className="page-wrapper">
         
         {/* FEATURED PETS */}
-        <section style={{ marginTop: '40px' }}>
-          <h2 style={{ marginBottom: '20px', textAlign:'center' }}>
+        <section style={{ marginTop: '60px' }}>
+          <h2 style={{ marginBottom: '40px', textAlign:'center', position: 'relative', top:'-30px' }}>
             Friends who looking for a home
           </h2>
-
+          <div
+            style={{
+              background: '#dcdcdc', // abu gelap
+              padding: '50px 40px',
+            }}
+          >
           <div
             style={{
               display: 'grid',
@@ -104,11 +110,11 @@ export default function HomePage() {
             {featured.map((p) => (
               <HomePetCard key={p.id} pet={p} />
             ))}
+          
           </div>
-
           <div style={{ textAlign: 'center', marginTop: '30px' }}>
             <Link href="/pets">
-              <button
+              <button className='see-btn'
                 style={{
                   padding: '10px 20px',
                   borderRadius: '10px',
@@ -122,11 +128,12 @@ export default function HomePage() {
               </button>
             </Link>
           </div>
+          </div>      
         </section>
 
 
         {/* ── BROWSE BY TYPE ── */}
-        <section className="section" style={{ paddingTop: 40 }}>
+        <section className="section" style={{ paddingTop: 100 }}>
           <div className="container">
             <h2 className="section-title">Browse by pets type</h2>
             <div className="cat-grid">
