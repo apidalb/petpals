@@ -43,7 +43,6 @@ export default function LoginPage() {
         <div className="auth-form-wrap">
       {/* Form side */}
       <div className="auth-form-side">
-        <div className="auth-form-wrap">
           <div className="auth-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
@@ -87,7 +86,7 @@ export default function LoginPage() {
             Admin: admin@petpals.id / admin123<br />
             User: budi@gmail.com / user123
           </div>
-        </div>
+        
       </div>
 
       {/* Image side */}

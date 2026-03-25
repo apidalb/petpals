@@ -116,6 +116,10 @@ ul    { list-style: none; }
 }
 
 .auth-form-wrap {
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: -80px;
   width: 100%;
   max-width: 420px;
 }
@@ -448,7 +452,7 @@ footer {
 ============================================= */
 .auth-layout {
   max-width: 1400px;
-  margin: 0px auto;
+  margin: 20px auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
@@ -459,14 +463,17 @@ footer {
 }
 .auth-form-side {
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; padding: 60px 48px; background: var(--white);
+  justify-content: center; padding: 40px 48px 40px; background: var(--white);
 }
-.auth-form-wrap { width: 100%; max-width: 360px; }
-.auth-logo { display: flex; justify-content: center; align-items: center; margin-bottom: 16px; margin: top 4px; }
+.auth-form-wrap { width: 100%; max-width: 360px; margin-top: -130px }
+.auth-logo { display: flex; justify-content: center; align-items: center; margin-bottom: 12px; margin-top: 0px; }
 .auth-logo-img { font-size: 1.3rem;  }
-.auth-h { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 24px; text-align:center; }
+.auth-h { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 24px; text-align:center; margin-top: -10px; }
 .auth-img-side img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
 .auth-img-side img { width: 100%; height: 100%; object-fit: cover; }
+.login-page .auth-logo{ margin-bottom: -50px; }
+.login-page .auth-h{ margin-top: 0; }
+
 
 /* Form */
 .f-group { margin-bottom: 14px; }
