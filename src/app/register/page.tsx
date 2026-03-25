@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import Footer from '@/components/layout/Footer'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -30,6 +31,7 @@ export default function RegisterPage() {
   }
 
   return (
+    <>
     <div className="auth-layout">
       <div className="auth-form-side">
         <div className="auth-form-wrap">
@@ -81,8 +83,11 @@ export default function RegisterPage() {
       </div>
       <div className="auth-img-side">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=85" alt="" />
+        <img src="/login-dog.png" alt="Dog" />
       </div>
     </div>
+
+    <Footer />
+    </>
   )
 }

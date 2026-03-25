@@ -34,44 +34,99 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="page-wrapper">
-
-        {/* ── HERO ── */}
-        <div className="hero fade-in">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1537204696486-967f1b7198c8?w=1600&q=85"
-            alt="Hero"
-            className="hero-img"
+    {/* HERO */}
+      <div className ="hero"
+          style={{
+            marginTop: '20px',
+            minHeight: '550px',
+            borderRadius: '15px',
+            backgroundImage:
+              "url('/Hero Banner.png')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+            }}
           />
-          <div className="hero-overlay" />
-          <div className="hero-content">
-            <h1>Find your perfect<br />pet today</h1>
+
+          {/* content */}
+          <div style={{ position: 'relative', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '48px', marginBottom: '20px' }}>
+              Find your perfect <br /> pet today
+            </h1>
+            
             <Link href="/pets">
-              <button className="hero-cta">See pets</button>
+            <button className="hero-cta"
+              style={{
+                padding: '12px 30px',
+                borderRadius: '10px',
+                border: '2px solid white',
+                background: 'transparent',
+                color: 'white',
+                cursor: 'pointer',
+              }}
+            >
+              See pets
+            
+            </button>
             </Link>
           </div>
         </div>
+    
 
-        {/* ── FEATURED PETS ── */}
-        <section className="section">
-          <div className="container">
-            <h2 className="section-title">Friends who looking for a home</h2>
-            <div style={{ background: 'var(--bg-gray)', borderRadius: '16px', padding: '28px' }}>
-              <div className="pets-grid">
-                {featured.map(p => <HomePetCard key={p.id} pet={p} />)}
-              </div>
-              <div style={{ textAlign: 'center', marginTop: '28px' }}>
-                <Link href="/pets">
-                  <button className="btn btn-primary btn-lg">See others</button>
-                </Link>
-              </div>
-            </div>
+        <div className="page-wrapper">
+        
+        {/* FEATURED PETS */}
+        <section style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px', textAlign:'center' }}>
+            Friends who looking for a home
+          </h2>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '20px',
+            }}
+          >
+            {featured.map((p) => (
+              <HomePetCard key={p.id} pet={p} />
+            ))}
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '30px' }}>
+            <Link href="/pets">
+              <button
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#00c26e',
+                  color: 'white',
+                  cursor: 'pointer',
+                }}
+              >
+                See others
+              </button>
+            </Link>
           </div>
         </section>
 
+
         {/* ── BROWSE BY TYPE ── */}
-        <section className="section" style={{ paddingTop: 0 }}>
+        <section className="section" style={{ paddingTop: 40 }}>
           <div className="container">
             <h2 className="section-title">Browse by pets type</h2>
             <div className="cat-grid">
@@ -95,25 +150,31 @@ export default function HomePage() {
         </section>
 
         {/* ── WHY ADOPT ── */}
-        <div className="why-section">
-          <h2 className="section-title" style={{ marginBottom: '48px' }}>Why adopt from us?</h2>
-          <div className="why-inner">
-            <div className="why-col" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
-              <div className="why-item">Healthy &amp; vaccinated pets</div>
+        {/* ── WHY ADOPT ── */}
+           <div className="why-section">
+            <h2 className="section-title why-title">Why adopt from us? </h2>
+
+         <div className="why-inner">
+
+          <div className="why-col left">
+            <div className="why-item">Healthy & vaccinated pets</div>
               <div className="why-item">Trusted adoption process</div>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80"
-              alt="Why adopt"
-              className="why-img"
-            />
-            <div className="why-col">
-              <div className="why-item">Support animal welfare</div>
-              <div className="why-item">Easy online adoption</div>
-            </div>
           </div>
-        </div>
+
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/Watchdog 1.png"
+            alt="Why adopt"
+            className="why-img"
+          />
+
+            <div className="why-col right">
+             <div className="why-item">Support animal welfare</div>
+               <div className="why-item">Easy online adoption</div>
+           </div>
+
+    </div>
+</div>
 
       </div>
       <Footer />
