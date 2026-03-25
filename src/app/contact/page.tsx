@@ -4,8 +4,8 @@ export default function ContactPage() {
   return (
     <>
       <div className="page-wrapper">
-        <div style={{ padding: '0 60px 48px' }}>
-          <div style={{ background: '#dcdcdc', borderRadius: '16px', padding: '70px' }}>
+        <div className="page-shell">
+          <div className="page-panel">
             <div className="contact-card">
               {/* Hero */}
               <div className="contact-hero">

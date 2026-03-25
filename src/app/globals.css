@@ -243,6 +243,20 @@ ul    { list-style: none; }
   flex:1;
 }
 
+.page-shell {
+  padding: 0 60px 48px;
+}
+
+.page-shell-bg {
+  background: var(--bg);
+}
+
+.page-panel {
+  background: #dcdcdc;
+  border-radius: 16px;
+  padding: 70px;
+}
+
 /* =============================================
    HERO
 ============================================= */
@@ -622,7 +636,6 @@ footer {
   background: var(--bg-gray); border-radius: 16px;
   padding: 24px; margin: 0 0px;
 }
-.pets-sidebar {}
 .pets-search-wrap { position: relative; margin-bottom: 16px; }
 .pets-search-icon { 
   position:absolute;
@@ -695,7 +708,6 @@ footer {
   max-width: 1100px; margin: 0 auto; padding: 0 24px 80px;
   align-items: start;
 }
-.detail-gallery {}
 .detail-main-img {
   width: 100%; aspect-ratio: 4/3; object-fit: cover;
   border-radius: var(--radius-lg); margin-bottom: 12px;
@@ -708,7 +720,6 @@ footer {
   cursor: pointer; transition: border-color .18s; flex-shrink: 0;
 }
 .detail-thumb.active, .detail-thumb:hover { border-color: var(--green); }
-.detail-info {}
 .detail-name-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
 .detail-name { font-size: 2rem; font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
 .detail-badge {
@@ -912,6 +923,22 @@ footer {
    RESPONSIVE
 ============================================= */
 @media (max-width: 1024px) {
+  .page-shell {
+    padding: 0 28px 40px;
+  }
+
+  .page-panel {
+    padding: 36px;
+  }
+
+  .nav-inner {
+    padding: 14px 20px;
+  }
+
+  .nav-links {
+    gap: 20px;
+  }
+
   .footer-grid     { grid-template-columns: 1fr 1fr; }
   .detail-layout   { grid-template-columns: 1fr; max-width: 640px; }
   .adopt-layout    { grid-template-columns: 1fr; }
@@ -919,12 +946,309 @@ footer {
   .contact-info-grid { grid-template-columns: 1fr; }
   .why-inner       { grid-template-columns: 1fr; }
   .why-img         { display: none; }
+
+  .why-col.left,
+  .why-col.right {
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .why-col.left .why-item:first-child,
+  .why-col.right .why-item:first-child {
+    margin: 0;
+  }
+
+  .admin-wrapper {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    border-radius: 0;
+  }
 }
+
 @media (max-width: 768px) {
-  .navbar { width: calc(100% - 24px); top: 8px; }
+  .page-shell {
+    padding: 0 14px 28px;
+  }
+
+  .page-panel {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .navbar {
+    margin-top: 12px;
+    padding: 0 12px;
+    width: 100%;
+  }
+
+  .nav-inner {
+    padding: 12px 14px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+
+  .nav-left img {
+    height: 40px;
+  }
+
+  .nav-links {
+    position: static;
+    left: auto;
+    transform: none;
+    width: 100%;
+    order: 3;
+    justify-content: center;
+    gap: 16px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.16);
+  }
+
+  .nav-link {
+    font-size: .92rem;
+  }
+
+  .nav-auth {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .btn-register {
+    padding: 7px 12px;
+    border-radius: 8px;
+  }
+
+  .nav-user-pill {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .nav-user-pill .arrow {
+    display: none;
+  }
+
+  .nav-drop {
+    right: 0;
+    top: 50px;
+    min-width: 165px;
+  }
+
+  .container {
+    padding: 0 14px;
+  }
+
+  .content-card,
+  .about-card,
+  .contact-card,
+  .adopt-layout {
+    margin: 0;
+  }
+
+  .content-card,
+  .about-card,
+  .adopt-layout,
+  .adopt-form-card {
+    padding: 18px;
+  }
+
+  .about-header {
+    margin-bottom: 24px;
+  }
+
+  .about-header h1 {
+    font-size: 1.65rem;
+  }
+
+  .about-header p {
+    font-size: .9rem;
+  }
+
+  .about-col h2 {
+    font-size: 1.05rem;
+  }
+
+  .about-col ul li,
+  .about-col p {
+    font-size: .88rem;
+  }
+
+  .contact-card {
+    border-radius: 12px;
+  }
+
+  .hero {
+    min-height: 440px !important;
+    margin: 12px auto !important;
+    border-radius: 14px !important;
+  }
+
+  .hero h1 {
+    font-size: 2rem !important;
+    line-height: 1.25;
+    padding: 0 14px;
+  }
+
+  .hero-cta {
+    padding: 10px 18px !important;
+    font-size: .9rem;
+  }
+
+  .page-wrapper > section:first-child h2 {
+    top: 0 !important;
+    margin-bottom: 20px !important;
+    padding: 0 14px;
+  }
+
+  .page-wrapper > section:first-child > div {
+    padding: 26px 14px !important;
+  }
+
+  .section {
+    padding: 44px 0;
+  }
+
+  .section[style] {
+    padding-top: 52px !important;
+  }
+
+  .cat-grid {
+    gap: 18px;
+  }
+
+  .cat-circle {
+    width: 84px;
+    height: 84px;
+  }
+
+  .why-section {
+    padding: 46px 16px 26px;
+  }
+
+  .why-title {
+    font-size: 2rem;
+    margin-bottom: 28px;
+  }
+
+  .why-item {
+    font-size: 1rem;
+  }
+
   .auth-layout { grid-template-columns: 1fr; }
+
   .auth-img-side { display: none; }
+
+  .auth-form-side {
+    padding: 24px 18px;
+  }
+
+  .auth-form-wrap {
+    margin-top: 0;
+  }
+
   .pets-layout { grid-template-columns: 1fr; }
+
+  .pets-layout {
+    padding: 14px;
+  }
+
+  .detail-layout {
+    padding: 0 14px 44px;
+    gap: 20px;
+  }
+
+  .detail-name-row {
+    flex-wrap: wrap;
+  }
+
+  .detail-name {
+    font-size: 1.6rem;
+  }
+
+  .adopt-actions,
+  .exp-btns {
+    flex-direction: column;
+  }
+
+  .contact-hero {
+    height: 320px;
+  }
+
+  .contact-hero-overlay h1 {
+    font-size: 1.8rem;
+  }
+
+  .contact-hero-overlay p {
+    font-size: .86rem;
+  }
+
+  .contact-info-item {
+    padding: 24px 16px;
+  }
+
+  .contact-info-item p {
+    font-size: .84rem;
+  }
+
+  .app-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .app-img {
+    margin: 0 auto;
+  }
+
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+
+  .footer-brand p {
+    max-width: none;
+  }
+
+  .footer-social {
+    justify-content: flex-start;
+  }
+
   .f-row { grid-template-columns: 1fr; }
+
+  .toast-box {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .toast {
+    max-width: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-shell {
+    padding: 0 10px 20px;
+  }
+
+  .page-panel {
+    padding: 12px;
+  }
+
+  .about-card,
+  .contact-card {
+    border-radius: 10px;
+  }
+
+  .about-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .contact-hero {
+    height: 260px;
+  }
+
+  .contact-hero-overlay h1 {
+    font-size: 1.55rem;
+  }
 }
