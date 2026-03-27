@@ -1,13 +1,38 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { PETS } from '@/lib/data'
 import PetCard from '@/components/ui/PetCard'
 import Footer from '@/components/layout/Footer'
-import type { PetType } from '@/types'
 
 export default function PetsPage() {
+  return (
+    <Suspense fallback={<PetsPageLoading />}>
+      <PetsPageContent />
+    </Suspense>
+  )
+}
+
+function PetsPageLoading() {
+  return (
+    <>
+      <div className="page-wrapper">
+        <div style={{ background: 'var(--bg)', padding: '0 60px 48px' }}>
+          <div className="pets-layout">
+            <div className="empty">
+              <span className="empty-icon">⏳</span>
+              <h3>Loading pets...</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  )
+}
+
+function PetsPageContent() {
   const searchParams = useSearchParams()
   const [search,    setSearch]    = useState('')
   const [species,   setSpecies]   = useState('')
