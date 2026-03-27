@@ -8,8 +8,8 @@ import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
 
 const DEMO_USERS = [
-  { email: 'admin@petpals.id', password: 'admin123', name: 'Admin PetPALS', role: 'admin'    as const },
-  { email: 'budi@gmail.com',   password: 'user123',  name: 'Budi Santoso',  role: 'adopter' as const },
+  { id: '219662da-3cec-4886-b555-d6d4381270bc', email: 'admin@petpals.id', password: 'admin123', name: 'Admin PetPALS', role: 'admin' as const },
+  { id: 'a13f79a7-24e7-48de-b7d5-52479c8c12af', email: 'user@petpals.id', password: 'user123', name: 'User PetPALS', role: 'adopter' as const },
 ]
 
 export default function LoginPage() {
@@ -30,7 +30,7 @@ export default function LoginPage() {
     await new Promise(r => setTimeout(r, 600))
     const found = DEMO_USERS.find(u => u.email === email && u.password === pass)
     if (!found) { setError('Email atau password salah.'); setLoading(false); return }
-    login({ name: found.name, email: found.email, role: found.role })
+    login({ id: found.id, name: found.name, email: found.email, role: found.role })
     showToast(`Selamat datang, ${found.name.split(' ')[0]}! 👋`, 'ok')
     router.push(found.role === 'admin' ? '/admin' : '/')
   }
@@ -86,7 +86,7 @@ export default function LoginPage() {
           <div style={{ marginTop: '20px', padding: '12px', background: 'var(--bg-gray)', borderRadius: '8px', fontSize: '.75rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
             <strong style={{ color: 'var(--text-2)' }}>Demo:</strong><br />
             Admin: admin@petpals.id / admin123<br />
-            User: budi@gmail.com / user123
+            User: user@petpals.id / user123
           </div>
       </div>
 

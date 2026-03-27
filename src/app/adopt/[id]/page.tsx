@@ -1,24 +1,72 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PETS } from '@/lib/data'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
-import type { Adoption } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import type { Adoption, Pet, PetType } from '@/types'
 
 export default function AdoptPage() {
   const { id }   = useParams()
   const router   = useRouter()
   const { user } = useAuth()
   const { showToast } = useToast()
-  const pet = PETS.find(p => p.id === Number(id))
+  const [pet, setPet] = useState<Pet | null>(null)
 
   const [loading,    setLoading]    = useState(false)
   const [motivation, setMotivation] = useState('')
   const [expLevel,   setExpLevel]   = useState('')
+
+  useEffect(() => {
+    const routeId = String(id)
+    const local = PETS.find(p => String(p.id) === routeId)
+    if (local) {
+      setPet(local)
+      return
+    }
+
+    const fetchPet = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('pets')
+        .select('id, name, type, breed, age_years, status, description, image_url')
+        .eq('id', routeId)
+        .single()
+
+      if (error || !data) {
+        setPet(null)
+        return
+      }
+
+      const fallback = PETS.find(p => p.type === data.type) ?? PETS[0]
+      const normalizedType =
+        data.type === 'Dog' || data.type === 'Cat' || data.type === 'Bird' || data.type === 'Reptile'
+          ? data.type
+          : 'Reptile'
+
+      setPet({
+        id: data.id,
+        name: data.name ?? fallback.name,
+        type: normalizedType as PetType,
+        breed: data.breed ?? fallback.breed,
+        age: data.age_years ? `${data.age_years} years` : fallback.age,
+        gender: fallback.gender,
+        weight: fallback.weight,
+        location: fallback.location,
+        status: data.status === 'Adopted' ? 'Adopted' : 'Available',
+        vaccinated: fallback.vaccinated,
+        neutered: fallback.neutered,
+        img: data.image_url ?? fallback.img,
+        desc: data.description ?? fallback.desc,
+      })
+    }
+
+    fetchPet()
+  }, [id])
 
   if (!pet) return (
     <div className="page-wrapper">
@@ -55,12 +103,34 @@ export default function AdoptPage() {
       housing: homeType, otherPets: currentPets || 'no', motivation, experience: expLevel,
       status: 'Pending', date: new Date().toISOString(),
     }
+
+    const supabase = createClient()
+    const userId = user.id
+    const canInsertSupabase = Boolean(userId && typeof pet.id === 'string')
+
+    if (canInsertSupabase) {
+      const { error } = await supabase
+        .from('adoptions')
+        .insert({
+          user_id: userId,
+          pet_id: pet.id,
+          status: 'Pending',
+          note: motivation,
+        })
+
+      if (!error) {
+        showToast(`Pengajuan adopsi ${pet.name} berhasil! 🎉`, 'ok')
+        router.push('/my-applications')
+        return
+      }
+    }
+
     try {
       const existing = JSON.parse(localStorage.getItem('pp_apps') || '[]')
       localStorage.setItem('pp_apps', JSON.stringify([newApp, ...existing]))
     } catch {}
 
-    showToast(`Pengajuan adopsi ${pet.name} berhasil! 🎉`, 'ok')
+    showToast(`Pengajuan adopsi ${pet.name} disimpan lokal (auth Supabase belum aktif).`, 'ok')
     router.push('/my-applications')
   }
 

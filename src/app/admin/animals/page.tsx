@@ -11,7 +11,7 @@ export default function AdminAnimalsPage() {
   const [pets, setPets]       = useState<Pet[]>(INITIAL_PETS)
   const [showModal, setShowModal] = useState(false)
   const [editPet, setEditPet]     = useState<Pet | null>(null)
-  const [deleteId, setDeleteId]   = useState<number | null>(null)
+  const [deleteId, setDeleteId]   = useState<number | string | null>(null)
 
   // Form state
   const emptyForm = { name: '', type: 'Dog' as PetType, breed: '', age: '', gender: 'Male', weight: '', location: 'Semarang', status: 'Available' as PetStatus, vaccinated: false, neutered: false, img: '', desc: '' }
@@ -26,14 +26,17 @@ export default function AdminAnimalsPage() {
       setPets(prev => prev.map(p => p.id === editPet.id ? { ...form, id: editPet.id } : p))
       showToast(`Data ${form.name} berhasil diperbarui.`, 'ok')
     } else {
-      const newId = Math.max(...pets.map(p => p.id), 0) + 1
+      const numericIds = pets
+        .map(p => (typeof p.id === 'number' ? p.id : NaN))
+        .filter(Number.isFinite)
+      const newId = Math.max(...numericIds, 0) + 1
       setPets(prev => [{ ...form, id: newId }, ...prev])
       showToast(`${form.name} berhasil ditambahkan.`, 'ok')
     }
     setShowModal(false)
   }
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: number | string) => {
     setPets(prev => prev.filter(p => p.id !== id))
     setDeleteId(null)
     showToast('Data hewan berhasil dihapus.', 'ok')

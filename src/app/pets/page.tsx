@@ -57,7 +57,10 @@ function PetsPageContent() {
 
       if (error || !data || data.length === 0) return
 
-      const maxLocalId = PETS.reduce((max, p) => Math.max(max, p.id), 0)
+      const numericIds = PETS
+        .map(p => (typeof p.id === 'number' ? p.id : NaN))
+        .filter(Number.isFinite)
+      const maxLocalId = Math.max(...numericIds, 0)
 
       const mapped: Pet[] = data.map((row, idx) => {
         const localMatch = PETS.find(

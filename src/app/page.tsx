@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer'
 import { relative } from 'path';
 
 // Simple card for home page — NO heart icon
-function HomePetCard({ pet }: { pet: { id: number; name: string; age: string; location: string; img: string } }) {
+function HomePetCard({ pet }: { pet: { id: number | string; name: string; age: string; location: string; img: string } }) {
   return (
     <Link href={`/pets/${pet.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <div style={{

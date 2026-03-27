@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PETS } from '@/lib/data'
 import { useAuth } from '@/context/AuthContext'
 import Footer from '@/components/layout/Footer'
+import { createClient } from '@/lib/supabase/client'
+import type { Pet, PetType } from '@/types'
 
 const MOCK_COMMENTS = [
   { id: 1, author: 'Ralph Edwards', avatar: 'https://i.pravatar.cc/36?img=3', date: 'Aug 19, 2021', text: 'Such a cute pet! I hope they find a good home soon.', likes: 5, replies: 3 },
@@ -15,10 +17,57 @@ export default function PetDetailPage() {
   const { id }   = useParams()
   const router   = useRouter()
   const { user } = useAuth()
+  const [pet, setPet] = useState<Pet | null>(null)
 
-  const pet = PETS.find(p => p.id === Number(id))
   const [activeImg, setActiveImg]     = useState(0)
   const [comment, setComment]         = useState('')
+
+  useEffect(() => {
+    const routeId = String(id)
+    const local = PETS.find(p => String(p.id) === routeId)
+    if (local) {
+      setPet(local)
+      return
+    }
+
+    const fetchPet = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('pets')
+        .select('id, name, type, breed, age_years, status, description, image_url')
+        .eq('id', routeId)
+        .single()
+
+      if (error || !data) {
+        setPet(null)
+        return
+      }
+
+      const fallback = PETS.find(p => p.type === data.type) ?? PETS[0]
+      const normalizedType =
+        data.type === 'Dog' || data.type === 'Cat' || data.type === 'Bird' || data.type === 'Reptile'
+          ? data.type
+          : 'Reptile'
+
+      setPet({
+        id: data.id,
+        name: data.name ?? fallback.name,
+        type: normalizedType as PetType,
+        breed: data.breed ?? fallback.breed,
+        age: data.age_years ? `${data.age_years} years` : fallback.age,
+        gender: fallback.gender,
+        weight: fallback.weight,
+        location: fallback.location,
+        status: data.status === 'Adopted' ? 'Adopted' : 'Available',
+        vaccinated: fallback.vaccinated,
+        neutered: fallback.neutered,
+        img: data.image_url ?? fallback.img,
+        desc: data.description ?? fallback.desc,
+      })
+    }
+
+    fetchPet()
+  }, [id])
 
   // Use same image 4x as thumbnails (in real app, pet would have multiple photos)
   const images = [pet?.img, pet?.img, pet?.img, pet?.img].filter(Boolean) as string[]
@@ -34,7 +83,12 @@ export default function PetDetailPage() {
   )
 
   const hasApplied = () => {
-    try { return JSON.parse(localStorage.getItem('pp_apps') || '[]').some((a: {petId:number}) => a.petId === pet.id) } catch { return false }
+    try {
+      return JSON.parse(localStorage.getItem('pp_apps') || '[]')
+        .some((a: { petId: number | string }) => String(a.petId) === String(pet.id))
+    } catch {
+      return false
+    }
   }
 
   return (

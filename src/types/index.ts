@@ -8,7 +8,7 @@ export type UserRole  = 'adopter' | 'admin'
 export type AdoptionStatus = 'Pending' | 'Approved' | 'Rejected'
 
 export interface Pet {
-  id: number
+  id: number | string
   name: string
   type: PetType
   breed: string
@@ -33,7 +33,7 @@ export interface User {
 
 export interface Adoption {
   id: number | string
-  petId: number
+  petId: number | string
   petName: string
   petImg: string
   petBreed: string
