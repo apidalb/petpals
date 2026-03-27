@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { PETS } from '@/lib/data'
 import PetCard from '@/components/ui/PetCard'
 import Footer from '@/components/layout/Footer'
+import { createClient } from '@/lib/supabase/client'
+import type { Pet, PetType } from '@/types'
 
 export default function PetsPage() {
   return (
@@ -34,6 +36,7 @@ function PetsPageLoading() {
 
 function PetsPageContent() {
   const searchParams = useSearchParams()
+  const [pets,      setPets]      = useState<Pet[]>(PETS)
   const [search,    setSearch]    = useState('')
   const [species,   setSpecies]   = useState('')
   const [ageFilter, setAgeFilter] = useState('')
@@ -44,11 +47,66 @@ function PetsPageContent() {
     if (type) setSpecies(type)
   }, [searchParams])
 
-  const filtered = PETS.filter(p => {
+  useEffect(() => {
+    const fetchPets = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('pets')
+        .select('id, name, type, breed, age_years, status, description, image_url')
+        .order('created_at', { ascending: false })
+
+      if (error || !data || data.length === 0) return
+
+      const maxLocalId = PETS.reduce((max, p) => Math.max(max, p.id), 0)
+
+      const mapped: Pet[] = data.map((row, idx) => {
+        const localMatch = PETS.find(
+          p => p.name.toLowerCase() === String(row.name || '').toLowerCase()
+            && p.type === row.type
+        )
+
+        const fallback = localMatch ?? PETS.find(p => p.type === row.type) ?? PETS[0]
+        const normalizedType =
+          row.type === 'Dog' || row.type === 'Cat' || row.type === 'Bird' || row.type === 'Reptile'
+            ? row.type
+            : 'Reptile'
+
+        return {
+          id: localMatch?.id ?? (maxLocalId + idx + 1),
+          name: row.name ?? fallback.name,
+          type: normalizedType as PetType,
+          breed: row.breed ?? fallback.breed,
+          age: row.age_years ? `${row.age_years} years` : fallback.age,
+          gender: fallback.gender,
+          weight: fallback.weight,
+          location: fallback.location,
+          status: row.status === 'Adopted' ? 'Adopted' : 'Available',
+          vaccinated: fallback.vaccinated,
+          neutered: fallback.neutered,
+          img: row.image_url ?? fallback.img,
+          desc: row.description ?? fallback.desc,
+        }
+      })
+
+      setPets(mapped)
+    }
+
+    fetchPets()
+  }, [])
+
+  const filtered = pets.filter(p => {
     const matchSearch  = !search   || p.name.toLowerCase().includes(search.toLowerCase()) || p.breed.toLowerCase().includes(search.toLowerCase())
     const matchSpecies = !species  || p.type === species
+    const ageYears = parseInt(p.age, 10)
+    const matchAge =
+      !ageFilter
+      || (ageFilter === 'lt1' && ageYears < 1)
+      || (ageFilter === '1-2' && ageYears >= 1 && ageYears <= 2)
+      || (ageFilter === '2-3' && ageYears >= 2 && ageYears <= 3)
+      || (ageFilter === '3-4' && ageYears >= 3 && ageYears <= 4)
+      || (ageFilter === 'gt4' && ageYears > 4)
     const matchAdopt   = !adoption || p.status === adoption
-    return matchSearch && matchSpecies && matchAdopt
+    return matchSearch && matchSpecies && matchAge && matchAdopt
   })
 
   return (
