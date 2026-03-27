@@ -48,11 +48,20 @@ export default function RegisterPage() {
     }
 
     const userId = data.user?.id
-    if (userId) {
-      await supabase.from('profiles').upsert(
+    const hasSession = Boolean(data.session?.user)
+
+    if (userId && hasSession) {
+      const { error: upsertError } = await supabase.from('profiles').upsert(
         { id: userId, full_name: name, role: 'adopter' },
         { onConflict: 'id' }
       )
+
+      if (upsertError) {
+        setError('Akun dibuat, tapi profil gagal disimpan. Coba login ulang.')
+        setLoading(false)
+        router.push('/login')
+        return
+      }
 
       login({ id: userId, name, email, role: 'adopter' })
       showToast('Akun berhasil dibuat! Selamat datang 🎉', 'ok')

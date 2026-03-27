@@ -48,6 +48,22 @@ export default function LoginPage() {
       .eq('id', data.user.id)
       .maybeSingle()
 
+    if (!profile) {
+      const fallbackName = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User'
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert(
+          { id: data.user.id, full_name: fallbackName, role: 'adopter' },
+          { onConflict: 'id' }
+        )
+
+      if (upsertError) {
+        setError('Login berhasil, tapi profil belum bisa dibuat. Coba lagi sebentar.')
+        setLoading(false)
+        return
+      }
+    }
+
     const name = (profile?.full_name as string) || data.user.user_metadata?.full_name || 'User'
     const role = ((profile?.role as 'admin' | 'adopter') || 'adopter')
 
