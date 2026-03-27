@@ -57,12 +57,7 @@ function PetsPageContent() {
 
       if (error || !data || data.length === 0) return
 
-      const numericIds = PETS
-        .map(p => (typeof p.id === 'number' ? p.id : NaN))
-        .filter(Number.isFinite)
-      const maxLocalId = Math.max(...numericIds, 0)
-
-      const mapped: Pet[] = data.map((row, idx) => {
+      const mapped: Pet[] = data.map((row) => {
         const localMatch = PETS.find(
           p => p.name.toLowerCase() === String(row.name || '').toLowerCase()
             && p.type === row.type
@@ -75,7 +70,7 @@ function PetsPageContent() {
             : 'Reptile'
 
         return {
-          id: localMatch?.id ?? (maxLocalId + idx + 1),
+          id: row.id,
           name: row.name ?? fallback.name,
           type: normalizedType as PetType,
           breed: row.breed ?? fallback.breed,

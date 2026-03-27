@@ -6,11 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
-
-const DEMO_USERS = [
-  { id: '219662da-3cec-4886-b555-d6d4381270bc', email: 'admin@petpals.id', password: 'admin123', name: 'Admin PetPALS', role: 'admin' as const },
-  { id: 'a13f79a7-24e7-48de-b7d5-52479c8c12af', email: 'user@petpals.id', password: 'user123', name: 'User PetPALS', role: 'adopter' as const },
-]
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -24,15 +20,35 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    const supabase = createClient()
     const form  = e.currentTarget
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
     const pass  = (form.elements.namedItem('password') as HTMLInputElement).value
-    await new Promise(r => setTimeout(r, 600))
-    const found = DEMO_USERS.find(u => u.email === email && u.password === pass)
-    if (!found) { setError('Email atau password salah.'); setLoading(false); return }
-    login({ id: found.id, name: found.name, email: found.email, role: found.role })
-    showToast(`Selamat datang, ${found.name.split(' ')[0]}! 👋`, 'ok')
-    router.push(found.role === 'admin' ? '/admin' : '/')
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: pass,
+    })
+
+    if (signInError || !data.user) {
+      setError('Email atau password salah.')
+      setLoading(false)
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', data.user.id)
+      .maybeSingle()
+
+    const name = (profile?.full_name as string) || data.user.user_metadata?.full_name || 'User'
+    const role = ((profile?.role as 'admin' | 'adopter') || 'adopter')
+
+    login({ id: data.user.id, name, email: data.user.email ?? email, role })
+    showToast(`Selamat datang, ${name.split(' ')[0]}! 👋`, 'ok')
+    router.push(role === 'admin' ? '/admin' : '/')
+    setLoading(false)
   }
 
   return (

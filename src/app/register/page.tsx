@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
+import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -18,16 +19,47 @@ export default function RegisterPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
+    const supabase = createClient()
     const form  = e.currentTarget
     const name  = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
     const pass  = (form.elements.namedItem('password') as HTMLInputElement).value
-    if (pass.length < 6) { setError('Password minimal 6 karakter.'); return }
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 700))
-    login({ name, email, role: 'adopter' })
-    showToast(`Akun berhasil dibuat! Selamat datang 🎉`, 'ok')
-    router.push('/')
+    if (pass.length < 6) {
+      setError('Password minimal 6 karakter.')
+      setLoading(false)
+      return
+    }
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { full_name: name } },
+    })
+
+    if (signUpError) {
+      setError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    const userId = data.user?.id
+    if (userId) {
+      await supabase.from('profiles').upsert(
+        { id: userId, full_name: name, role: 'adopter' },
+        { onConflict: 'id' }
+      )
+
+      login({ id: userId, name, email, role: 'adopter' })
+      showToast('Akun berhasil dibuat! Selamat datang 🎉', 'ok')
+      router.push('/')
+      setLoading(false)
+      return
+    }
+
+    showToast('Akun dibuat. Cek email untuk verifikasi, lalu login.', 'ok')
+    router.push('/login')
+    setLoading(false)
   }
 
   return (

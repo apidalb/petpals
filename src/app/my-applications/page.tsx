@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import type { Adoption } from '@/types'
+import { createClient } from '@/lib/supabase/client'
 
 function statusClass(s: string) {
   if (s === 'Approved') return 'st-ok'
@@ -22,11 +23,58 @@ export default function MyApplicationsPage() {
   const [apps, setApps] = useState<Adoption[]>([])
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('pp_apps') || '[]') as Adoption[]
-      setApps(stored)
-    } catch {}
-  }, [])
+    const loadApps = async () => {
+      if (!user?.id) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('pp_apps') || '[]') as Adoption[]
+          setApps(stored)
+        } catch {}
+        return
+      }
+
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('adoptions')
+        .select('id, pet_id, status, note, created_at, pets(name, breed, image_url)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error || !data) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('pp_apps') || '[]') as Adoption[]
+          setApps(stored)
+        } catch {}
+        return
+      }
+
+      const mapped: Adoption[] = data.map((row: {
+        id: string
+        pet_id: string
+        status: 'Pending' | 'Approved' | 'Rejected'
+        note: string | null
+        created_at: string
+        pets: { name: string; breed: string; image_url: string | null } | Array<{ name: string; breed: string; image_url: string | null }> | null
+      }) => {
+        const pet = Array.isArray(row.pets) ? row.pets[0] : row.pets
+        return {
+          id: row.id,
+          petId: row.pet_id,
+          petName: pet?.name || 'Pet',
+          petImg: pet?.image_url || '/login-dog.png',
+          petBreed: pet?.breed || '-',
+          housing: '-',
+          otherPets: '-',
+          motivation: row.note || '-',
+          status: row.status,
+          date: row.created_at,
+        }
+      })
+
+      setApps(mapped)
+    }
+
+    loadApps()
+  }, [user?.id])
 
   if (!user) {
     return (
