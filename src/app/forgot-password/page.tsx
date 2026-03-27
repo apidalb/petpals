@@ -21,8 +21,12 @@ export default function ForgotPasswordPage() {
         {/* Form side */}
         <div className="auth-form-side">
           <div className="auth-form-wrap">
+            <div className="auth-logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-petpals-black.png" alt="PetPals" style={{ height: '52px', width: 'auto', mixBlendMode: 'multiply' }} />
+            </div>
 
-            <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>
+            <h1 className="auth-h" style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '10px' }}>
               Reset your password
             </h1>
             <p style={{ fontSize: '.875rem', color: 'var(--text-muted)', marginBottom: '28px', lineHeight: '1.6' }}>
