@@ -38,7 +38,11 @@ export default function RegisterPage() {
     })
 
     if (signUpError) {
-      setError(signUpError.message)
+      if (signUpError.code === 'email_provider_disabled') {
+        setError('Signup email/password belum aktif di Supabase (Auth > Providers > Email).')
+      } else {
+        setError(signUpError.message)
+      }
       setLoading(false)
       return
     }

@@ -31,7 +31,13 @@ export default function LoginPage() {
     })
 
     if (signInError || !data.user) {
-      setError('Email atau password salah.')
+      if (signInError?.code === 'email_provider_disabled') {
+        setError('Login email/password belum aktif di Supabase (Auth > Providers > Email).')
+      } else if (signInError?.message) {
+        setError(signInError.message)
+      } else {
+        setError('Email atau password salah.')
+      }
       setLoading(false)
       return
     }
