@@ -5,6 +5,7 @@ import type { Pet, PetStatus, PetType } from '@/types'
 import { useToast } from '@/context/ToastContext'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { createClient } from '@/lib/supabase/client'
+import { PET_IMAGES_BUCKET } from '@/lib/supabase/storage'
 
 type DbPet = {
   id: string
@@ -277,6 +278,9 @@ export default function AdminAnimalsPage() {
             <div className="f-group">
               <label className="f-label">URL Foto</label>
               <input className="f-input" value={form.img} onChange={e => setForm(f => ({ ...f, img: e.target.value }))} placeholder="https://..." />
+              <p style={{ marginTop: '6px', fontSize: '.74rem', color: 'var(--text-dim)' }}>
+                Storage bucket siap: <strong>{PET_IMAGES_BUCKET}</strong>
+              </p>
             </div>
             <div className="f-group">
               <label className="f-label">Deskripsi</label>

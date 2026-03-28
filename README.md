@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Supabase Storage Setup (PRK22-47)
+
+1. Open Supabase SQL Editor.
+2. Run SQL file `supabase/prk22-47-storage.sql`.
+3. Confirm bucket `pet-images` is created and public read is active.
+
+Optional env override:
+
+```bash
+NEXT_PUBLIC_SUPABASE_PETS_BUCKET=pet-images
+```
