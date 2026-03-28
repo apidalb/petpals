@@ -8,6 +8,21 @@ import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
 
+function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Request timeout')), ms)
+    promise
+      .then(value => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch(err => {
+        clearTimeout(timer)
+        reject(err)
+      })
+  })
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const { login } = useAuth()
@@ -20,59 +35,66 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const supabase = createClient()
-    const form  = e.currentTarget
-    const name  = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
-    const pass  = (form.elements.namedItem('password') as HTMLInputElement).value
-    if (pass.length < 6) {
-      setError('Password minimal 6 karakter.')
-      setLoading(false)
-      return
-    }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password: pass,
-      options: { data: { full_name: name } },
-    })
-
-    if (signUpError) {
-      if (signUpError.code === 'email_provider_disabled') {
-        setError('Signup email/password belum aktif di Supabase (Auth > Providers > Email).')
-      } else {
-        setError(signUpError.message)
-      }
-      setLoading(false)
-      return
-    }
-
-    const userId = data.user?.id
-    const hasSession = Boolean(data.session?.user)
-
-    if (userId && hasSession) {
-      const { error: upsertError } = await supabase.from('profiles').upsert(
-        { id: userId, full_name: name, role: 'adopter' },
-        { onConflict: 'id' }
-      )
-
-      if (upsertError) {
-        setError('Akun dibuat, tapi profil gagal disimpan. Coba login ulang.')
-        setLoading(false)
-        router.push('/login')
+    try {
+      const supabase = createClient()
+      const form  = e.currentTarget
+      const name  = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
+      const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
+      const pass  = (form.elements.namedItem('password') as HTMLInputElement).value
+      if (pass.length < 6) {
+        setError('Password minimal 6 karakter.')
         return
       }
 
-      login({ id: userId, name, email, role: 'adopter' })
-      showToast('Akun berhasil dibuat! Selamat datang 🎉', 'ok')
-      router.push('/')
-      setLoading(false)
-      return
-    }
+      const { data, error: signUpError } = await withTimeout(
+        supabase.auth.signUp({
+          email,
+          password: pass,
+          options: { data: { full_name: name } },
+        })
+      )
 
-    showToast('Akun dibuat. Cek email untuk verifikasi, lalu login.', 'ok')
-    router.push('/login')
-    setLoading(false)
+      if (signUpError) {
+        if (signUpError.code === 'email_provider_disabled') {
+          setError('Signup email/password belum aktif di Supabase (Auth > Providers > Email).')
+        } else {
+          setError(signUpError.message)
+        }
+        return
+      }
+
+      const userId = data.user?.id
+      const hasSession = Boolean(data.session?.user)
+
+      if (userId && hasSession) {
+        const { error: upsertError } = await supabase.from('profiles').upsert(
+          { id: userId, full_name: name, role: 'adopter' },
+          { onConflict: 'id' }
+        )
+
+        if (upsertError) {
+          setError('Akun dibuat, tapi profil gagal disimpan. Coba login ulang.')
+          router.push('/login')
+          return
+        }
+
+        login({ id: userId, name, email, role: 'adopter' })
+        showToast('Akun berhasil dibuat! Selamat datang 🎉', 'ok')
+        router.push('/')
+        return
+      }
+
+      showToast('Akun dibuat. Cek email untuk verifikasi, lalu login.', 'ok')
+      router.push('/login')
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Request timeout') {
+        setError('Koneksi ke server terlalu lama. Coba lagi.')
+      } else {
+        setError('Terjadi kendala saat register. Coba refresh halaman.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

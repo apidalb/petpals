@@ -8,6 +8,21 @@ import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
 
+function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Request timeout')), ms)
+    promise
+      .then(value => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch(err => {
+        clearTimeout(timer)
+        reject(err)
+      })
+  })
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
@@ -20,57 +35,63 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const supabase = createClient()
-    const form  = e.currentTarget
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
-    const pass  = (form.elements.namedItem('password') as HTMLInputElement).value
+    try {
+      const supabase = createClient()
+      const form  = e.currentTarget
+      const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
+      const pass  = (form.elements.namedItem('password') as HTMLInputElement).value
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: pass,
-    })
+      const { data, error: signInError } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password: pass })
+      )
 
-    if (signInError || !data.user) {
-      if (signInError?.code === 'email_provider_disabled') {
-        setError('Login email/password belum aktif di Supabase (Auth > Providers > Email).')
-      } else if (signInError?.message) {
-        setError(signInError.message)
-      } else {
-        setError('Email atau password salah.')
-      }
-      setLoading(false)
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, role')
-      .eq('id', data.user.id)
-      .maybeSingle()
-
-    if (!profile) {
-      const fallbackName = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User'
-      const { error: upsertError } = await supabase
-        .from('profiles')
-        .upsert(
-          { id: data.user.id, full_name: fallbackName, role: 'adopter' },
-          { onConflict: 'id' }
-        )
-
-      if (upsertError) {
-        setError('Login berhasil, tapi profil belum bisa dibuat. Coba lagi sebentar.')
-        setLoading(false)
+      if (signInError || !data.user) {
+        if (signInError?.code === 'email_provider_disabled') {
+          setError('Login email/password belum aktif di Supabase (Auth > Providers > Email).')
+        } else if (signInError?.message) {
+          setError(signInError.message)
+        } else {
+          setError('Email atau password salah.')
+        }
         return
       }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (!profile) {
+        const fallbackName = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User'
+        const { error: upsertError } = await supabase
+          .from('profiles')
+          .upsert(
+            { id: data.user.id, full_name: fallbackName, role: 'adopter' },
+            { onConflict: 'id' }
+          )
+
+        if (upsertError) {
+          setError('Login berhasil, tapi profil belum bisa dibuat. Coba lagi sebentar.')
+          return
+        }
+      }
+
+      const name = (profile?.full_name as string) || data.user.user_metadata?.full_name || 'User'
+      const role = ((profile?.role as 'admin' | 'adopter') || 'adopter')
+
+      login({ id: data.user.id, name, email: data.user.email ?? email, role })
+      showToast(`Selamat datang, ${name.split(' ')[0]}! 👋`, 'ok')
+      router.push(role === 'admin' ? '/admin' : '/')
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Request timeout') {
+        setError('Koneksi ke server terlalu lama. Coba lagi.')
+      } else {
+        setError('Terjadi kendala saat login. Coba refresh halaman.')
+      }
+    } finally {
+      setLoading(false)
     }
-
-    const name = (profile?.full_name as string) || data.user.user_metadata?.full_name || 'User'
-    const role = ((profile?.role as 'admin' | 'adopter') || 'adopter')
-
-    login({ id: data.user.id, name, email: data.user.email ?? email, role })
-    showToast(`Selamat datang, ${name.split(' ')[0]}! 👋`, 'ok')
-    router.push(role === 'admin' ? '/admin' : '/')
-    setLoading(false)
   }
 
   return (
