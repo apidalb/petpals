@@ -3,26 +3,84 @@
 import { useEffect, useState } from 'react'
 import type { Adoption, AdoptionStatus } from '@/types'
 import { useToast } from '@/context/ToastContext'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminAdoptionsPage() {
   const { showToast } = useToast()
   const [apps, setApps]       = useState<Adoption[]>([])
   const [filter, setFilter]   = useState<'All' | AdoptionStatus>('All')
   const [selected, setSelected] = useState<Adoption | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    try { setApps(JSON.parse(localStorage.getItem('pp_apps') || '[]')) } catch {}
+    const loadAdoptions = async () => {
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from('adoptions')
+        .select('id, pet_id, status, note, created_at, pets(name, breed, image_url)')
+        .order('created_at', { ascending: false })
+
+      if (error || !data) {
+        try {
+          setApps(JSON.parse(localStorage.getItem('pp_apps') || '[]'))
+        } catch {}
+        setLoading(false)
+        return
+      }
+
+      const mapped: Adoption[] = data.map((row: {
+        id: string
+        pet_id: string
+        status: AdoptionStatus
+        note: string | null
+        created_at: string
+        pets: { name: string; breed: string; image_url: string | null } | Array<{ name: string; breed: string; image_url: string | null }> | null
+      }) => {
+        const pet = Array.isArray(row.pets) ? row.pets[0] : row.pets
+        return {
+          id: row.id,
+          petId: row.pet_id,
+          petName: pet?.name || 'Pet',
+          petImg: pet?.image_url || '/login-dog.png',
+          petBreed: pet?.breed || '-',
+          housing: '-',
+          otherPets: '-',
+          motivation: row.note || '-',
+          status: row.status,
+          date: row.created_at,
+        }
+      })
+
+      setApps(mapped)
+      setLoading(false)
+    }
+
+    loadAdoptions()
   }, [])
 
-  const save = (updated: Adoption[]) => {
+  const updateStatus = async (id: number | string, status: AdoptionStatus) => {
+    const prevApps = apps
+    const updated = apps.map(a => (a.id === id ? { ...a, status } : a))
     setApps(updated)
-    try { localStorage.setItem('pp_apps', JSON.stringify(updated)) } catch {}
-  }
+    setSelected(prev => (prev?.id === id ? { ...prev, status } : prev))
 
-  const updateStatus = (id: number | string, status: AdoptionStatus) => {
-    const updated = apps.map(a => a.id === id ? { ...a, status } : a)
-    save(updated)
-    setSelected(prev => prev?.id === id ? { ...prev, status } : prev)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('adoptions')
+      .update({ status })
+      .eq('id', id)
+
+    if (error) {
+      setApps(prevApps)
+      setSelected(prev => {
+        const original = prevApps.find(a => a.id === prev?.id)
+        return original ?? prev
+      })
+      showToast('Gagal update status pengajuan.', 'err')
+      return
+    }
+
     showToast(`Pengajuan ${status === 'Approved' ? 'disetujui ✅' : 'ditolak ❌'}.`, status === 'Approved' ? 'ok' : 'err')
   }
 
@@ -60,7 +118,13 @@ export default function AdminAdoptionsPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="empty">
+          <span className="empty-icon">⏳</span>
+          <h3>Memuat pengajuan...</h3>
+          <p>Tunggu sebentar, data sedang diambil dari database.</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="empty">
           <span className="empty-icon">📋</span>
           <h3>Tidak ada pengajuan</h3>

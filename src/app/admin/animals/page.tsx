@@ -1,42 +1,158 @@
 'use client'
 
-import { useState } from 'react'
-import { PETS as INITIAL_PETS } from '@/lib/data'
+import { useEffect, useState } from 'react'
 import type { Pet, PetStatus, PetType } from '@/types'
 import { useToast } from '@/context/ToastContext'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { createClient } from '@/lib/supabase/client'
+
+type DbPet = {
+  id: string
+  name: string | null
+  type: string | null
+  breed: string | null
+  age_years: number | null
+  status: string | null
+  image_url: string | null
+  description: string | null
+}
+
+function mapDbPetToPet(row: DbPet): Pet {
+  const type =
+    row.type === 'Dog' || row.type === 'Cat' || row.type === 'Bird' || row.type === 'Reptile'
+      ? row.type
+      : 'Reptile'
+  const status =
+    row.status === 'Available' || row.status === 'Adopted' || row.status === 'In Process'
+      ? row.status
+      : 'Available'
+
+  return {
+    id: row.id,
+    name: row.name ?? 'Unnamed Pet',
+    type,
+    breed: row.breed ?? '-',
+    age: row.age_years != null ? `${row.age_years} years` : '-',
+    gender: 'Unknown',
+    weight: '-',
+    location: 'Unknown',
+    status,
+    vaccinated: false,
+    neutered: false,
+    img: row.image_url ?? '/login-dog.png',
+    desc: row.description ?? 'No description yet.',
+  }
+}
+
+function getAgeYears(age: string): number | null {
+  const parsed = parseInt(age, 10)
+  return Number.isFinite(parsed) ? parsed : null
+}
 
 export default function AdminAnimalsPage() {
   const { showToast } = useToast()
-  const [pets, setPets]       = useState<Pet[]>(INITIAL_PETS)
+  const [pets, setPets]       = useState<Pet[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editPet, setEditPet]     = useState<Pet | null>(null)
   const [deleteId, setDeleteId]   = useState<number | string | null>(null)
+  const [saving, setSaving]       = useState(false)
 
   // Form state
   const emptyForm = { name: '', type: 'Dog' as PetType, breed: '', age: '', gender: 'Male', weight: '', location: 'Semarang', status: 'Available' as PetStatus, vaccinated: false, neutered: false, img: '', desc: '' }
   const [form, setForm] = useState(emptyForm)
 
+  useEffect(() => {
+    const fetchPets = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('pets')
+        .select('id, name, type, breed, age_years, status, image_url, description')
+        .order('created_at', { ascending: false })
+
+      if (error || !data) {
+        setPets([])
+        showToast('Gagal memuat data hewan dari server.', 'err')
+        return
+      }
+
+      setPets(data.map(mapDbPetToPet))
+    }
+
+    fetchPets()
+  }, [showToast])
+
   const openAdd = () => { setEditPet(null); setForm(emptyForm); setShowModal(true) }
   const openEdit = (p: Pet) => { setEditPet(p); setForm({ ...p }); setShowModal(true) }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !form.breed.trim()) { showToast('Nama dan breed wajib diisi.', 'err'); return }
+    setSaving(true)
+    const supabase = createClient()
+
     if (editPet) {
+      const { error } = await supabase
+        .from('pets')
+        .update({
+          name: form.name,
+          type: form.type,
+          breed: form.breed,
+          age_years: getAgeYears(form.age),
+          status: form.status,
+          image_url: form.img || null,
+          description: form.desc || null,
+        })
+        .eq('id', String(editPet.id))
+
+      if (error) {
+        showToast('Gagal memperbarui data hewan.', 'err')
+        setSaving(false)
+        return
+      }
+
       setPets(prev => prev.map(p => p.id === editPet.id ? { ...form, id: editPet.id } : p))
       showToast(`Data ${form.name} berhasil diperbarui.`, 'ok')
     } else {
-      const numericIds = pets
-        .map(p => (typeof p.id === 'number' ? p.id : NaN))
-        .filter(Number.isFinite)
-      const newId = Math.max(...numericIds, 0) + 1
-      setPets(prev => [{ ...form, id: newId }, ...prev])
+      const { data, error } = await supabase
+        .from('pets')
+        .insert({
+          name: form.name,
+          type: form.type,
+          breed: form.breed,
+          age_years: getAgeYears(form.age),
+          status: form.status,
+          image_url: form.img || null,
+          description: form.desc || null,
+        })
+        .select('id, name, type, breed, age_years, status, image_url, description')
+        .single()
+
+      if (error || !data) {
+        showToast('Gagal menambahkan hewan baru.', 'err')
+        setSaving(false)
+        return
+      }
+
+      setPets(prev => [mapDbPetToPet(data), ...prev])
       showToast(`${form.name} berhasil ditambahkan.`, 'ok')
     }
+
+    setSaving(false)
     setShowModal(false)
   }
 
-  const handleDelete = (id: number | string) => {
+  const handleDelete = async (id: number | string) => {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('pets')
+      .delete()
+      .eq('id', String(id))
+
+    if (error) {
+      showToast('Gagal menghapus data hewan.', 'err')
+      setDeleteId(null)
+      return
+    }
+
     setPets(prev => prev.filter(p => p.id !== id))
     setDeleteId(null)
     showToast('Data hewan berhasil dihapus.', 'ok')
@@ -178,8 +294,8 @@ export default function AdminAnimalsPage() {
             </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Batal</button>
-              <button className="btn btn-primary" onClick={handleSave}>
-                {editPet ? 'Simpan Perubahan' : 'Tambah Hewan'}
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? 'Menyimpan...' : editPet ? 'Simpan Perubahan' : 'Tambah Hewan'}
               </button>
             </div>
           </div>

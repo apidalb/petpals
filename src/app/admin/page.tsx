@@ -2,19 +2,41 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { PETS } from '@/lib/data'
 import type { Adoption } from '@/types'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminDashboardPage() {
   const [apps, setApps] = useState<Adoption[]>([])
+  const [totalAnimals, setTotalAnimals] = useState(0)
+  const [available, setAvailable] = useState(0)
+  const [adopted, setAdopted] = useState(0)
 
   useEffect(() => {
     try { setApps(JSON.parse(localStorage.getItem('pp_apps') || '[]')) } catch {}
   }, [])
 
-  const totalAnimals  = PETS.length
-  const available     = PETS.filter(p => p.status === 'Available').length
-  const adopted       = PETS.filter(p => p.status === 'Adopted').length
+  useEffect(() => {
+    const fetchPetStats = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('pets')
+        .select('status')
+
+      if (error || !data) {
+        setTotalAnimals(0)
+        setAvailable(0)
+        setAdopted(0)
+        return
+      }
+
+      setTotalAnimals(data.length)
+      setAvailable(data.filter(p => p.status === 'Available').length)
+      setAdopted(data.filter(p => p.status === 'Adopted').length)
+    }
+
+    fetchPetStats()
+  }, [])
+
   const pending       = apps.filter(a => a.status === 'Pending').length
 
   const stats = [

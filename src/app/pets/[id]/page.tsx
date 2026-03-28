@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { PETS } from '@/lib/data'
 import { useAuth } from '@/context/AuthContext'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
@@ -15,7 +14,6 @@ const MOCK_COMMENTS = [
 
 export default function PetDetailPage() {
   const { id }   = useParams()
-  const router   = useRouter()
   const { user } = useAuth()
   const [pet, setPet] = useState<Pet | null>(null)
 
@@ -23,14 +21,8 @@ export default function PetDetailPage() {
   const [comment, setComment]         = useState('')
 
   useEffect(() => {
-    const routeId = String(id)
-    const local = PETS.find(p => String(p.id) === routeId)
-    if (local) {
-      setPet(local)
-      return
-    }
-
     const fetchPet = async () => {
+      const routeId = String(id)
       const supabase = createClient()
       const { data, error } = await supabase
         .from('pets')
@@ -43,26 +35,29 @@ export default function PetDetailPage() {
         return
       }
 
-      const fallback = PETS.find(p => p.type === data.type) ?? PETS[0]
       const normalizedType =
         data.type === 'Dog' || data.type === 'Cat' || data.type === 'Bird' || data.type === 'Reptile'
           ? data.type
           : 'Reptile'
+      const status =
+        data.status === 'Adopted' || data.status === 'In Process' || data.status === 'Available'
+          ? data.status
+          : 'Available'
 
       setPet({
         id: data.id,
-        name: data.name ?? fallback.name,
+        name: data.name ?? 'Unnamed Pet',
         type: normalizedType as PetType,
-        breed: data.breed ?? fallback.breed,
-        age: data.age_years ? `${data.age_years} years` : fallback.age,
-        gender: fallback.gender,
-        weight: fallback.weight,
-        location: fallback.location,
-        status: data.status === 'Adopted' ? 'Adopted' : 'Available',
-        vaccinated: fallback.vaccinated,
-        neutered: fallback.neutered,
-        img: data.image_url ?? fallback.img,
-        desc: data.description ?? fallback.desc,
+        breed: data.breed ?? '-',
+        age: data.age_years != null ? `${data.age_years} years` : '-',
+        gender: 'Unknown',
+        weight: '-',
+        location: 'Unknown',
+        status,
+        vaccinated: false,
+        neutered: false,
+        img: data.image_url ?? '/login-dog.png',
+        desc: data.description ?? 'No description yet.',
       })
     }
 

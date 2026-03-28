@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { PETS } from '@/lib/data'
 import PetCard from '@/components/ui/PetCard'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
@@ -36,7 +35,7 @@ function PetsPageLoading() {
 
 function PetsPageContent() {
   const searchParams = useSearchParams()
-  const [pets,      setPets]      = useState<Pet[]>(PETS)
+  const [pets,      setPets]      = useState<Pet[]>([])
   const [search,    setSearch]    = useState('')
   const [species,   setSpecies]   = useState('')
   const [ageFilter, setAgeFilter] = useState('')
@@ -55,34 +54,35 @@ function PetsPageContent() {
         .select('id, name, type, breed, age_years, status, description, image_url')
         .order('created_at', { ascending: false })
 
-      if (error || !data || data.length === 0) return
+      if (error || !data) {
+        setPets([])
+        return
+      }
 
       const mapped: Pet[] = data.map((row) => {
-        const localMatch = PETS.find(
-          p => p.name.toLowerCase() === String(row.name || '').toLowerCase()
-            && p.type === row.type
-        )
-
-        const fallback = localMatch ?? PETS.find(p => p.type === row.type) ?? PETS[0]
         const normalizedType =
           row.type === 'Dog' || row.type === 'Cat' || row.type === 'Bird' || row.type === 'Reptile'
             ? row.type
             : 'Reptile'
+        const status =
+          row.status === 'Adopted' || row.status === 'In Process' || row.status === 'Available'
+            ? row.status
+            : 'Available'
 
         return {
           id: row.id,
-          name: row.name ?? fallback.name,
+          name: row.name ?? 'Unnamed Pet',
           type: normalizedType as PetType,
-          breed: row.breed ?? fallback.breed,
-          age: row.age_years ? `${row.age_years} years` : fallback.age,
-          gender: fallback.gender,
-          weight: fallback.weight,
-          location: fallback.location,
-          status: row.status === 'Adopted' ? 'Adopted' : 'Available',
-          vaccinated: fallback.vaccinated,
-          neutered: fallback.neutered,
-          img: row.image_url ?? fallback.img,
-          desc: row.description ?? fallback.desc,
+          breed: row.breed ?? '-',
+          age: row.age_years != null ? `${row.age_years} years` : '-',
+          gender: 'Unknown',
+          weight: '-',
+          location: 'Unknown',
+          status,
+          vaccinated: false,
+          neutered: false,
+          img: row.image_url ?? '/login-dog.png',
+          desc: row.description ?? 'No description yet.',
         }
       })
 

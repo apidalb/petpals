@@ -1,12 +1,20 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { PETS } from '@/lib/data'
 import Footer from '@/components/layout/Footer'
-import { relative } from 'path';
+import { createClient } from '@/lib/supabase/client'
+
+type FeaturedPet = {
+  id: string
+  name: string
+  age: string
+  location: string
+  img: string
+}
 
 // Simple card for home page — NO heart icon
-function HomePetCard({ pet }: { pet: { id: number | string; name: string; age: string; location: string; img: string } }) {
+function HomePetCard({ pet }: { pet: FeaturedPet }) {
   return (
     <Link href={`/pets/${pet.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <div style={{
@@ -31,7 +39,36 @@ function HomePetCard({ pet }: { pet: { id: number | string; name: string; age: s
 }
 
 export default function HomePage() {
-  const featured = PETS.filter(p => p.status === 'Available').slice(0, 4)
+  const [featured, setFeatured] = useState<FeaturedPet[]>([])
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('pets')
+        .select('id, name, age_years, image_url, status')
+        .eq('status', 'Available')
+        .order('created_at', { ascending: false })
+        .limit(4)
+
+      if (error || !data) {
+        setFeatured([])
+        return
+      }
+
+      const mapped: FeaturedPet[] = data.map((row) => ({
+        id: row.id,
+        name: row.name ?? 'Unnamed Pet',
+        age: row.age_years != null ? `${row.age_years} years` : '-',
+        location: 'Unknown',
+        img: row.image_url ?? '/login-dog.png',
+      }))
+
+      setFeatured(mapped)
+    }
+
+    fetchFeatured()
+  }, [])
 
   return (
     <>
