@@ -8,10 +8,10 @@ import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
 
-function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, ms = 10000): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Request timeout')), ms)
-    promise
+    Promise.resolve(promise)
       .then(value => {
         clearTimeout(timer)
         resolve(value)
@@ -56,25 +56,32 @@ export default function LoginPage() {
         return
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, role')
-        .eq('id', data.user.id)
-        .maybeSingle()
+      let profile: { full_name?: string; role?: 'admin' | 'adopter' } | null = null
+      try {
+        const { data: profileData } = await withTimeout(
+          supabase
+            .from('profiles')
+            .select('full_name, role')
+            .eq('id', data.user.id)
+            .maybeSingle()
+          ,
+          4000
+        )
+        profile = profileData
+      } catch {
+        // continue with default role when profile fetch is slow
+      }
 
       if (!profile) {
         const fallbackName = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User'
-        const { error: upsertError } = await supabase
+
+        // Fire and forget to avoid delaying sign-in UX.
+        void supabase
           .from('profiles')
           .upsert(
             { id: data.user.id, full_name: fallbackName, role: 'adopter' },
             { onConflict: 'id' }
           )
-
-        if (upsertError) {
-          setError('Login berhasil, tapi profil belum bisa dibuat. Coba lagi sebentar.')
-          return
-        }
       }
 
       const name = (profile?.full_name as string) || data.user.user_metadata?.full_name || 'User'
@@ -85,7 +92,7 @@ export default function LoginPage() {
       router.push(role === 'admin' ? '/admin' : '/')
     } catch (err) {
       if (err instanceof Error && err.message === 'Request timeout') {
-        setError('Koneksi ke server terlalu lama. Coba lagi.')
+        setError('Koneksi ke server terlalu lama. Coba lagi (cek internet/VPN/ad blocker).')
       } else {
         setError('Terjadi kendala saat login. Coba refresh halaman.')
       }

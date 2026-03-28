@@ -36,8 +36,8 @@ export default function Navbar() {
     { href: '/contact', label: 'Contacts' },
   ]
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     setDropOpen(false)
     showToast('Berhasil logout!', 'ok')
     router.push('/')
