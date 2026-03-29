@@ -1,6 +1,3 @@
--- PRK22-47: Storage setup for pet images
--- Run in Supabase SQL Editor
-
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'pet-images',
