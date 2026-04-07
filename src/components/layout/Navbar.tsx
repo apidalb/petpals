@@ -15,6 +15,7 @@ export default function Navbar() {
   const [navHidden, setNavHidden] = useState(false)
   const lastScrollY = useRef(0)
 
+  // Hide on scroll down, show on scroll up
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY
@@ -36,6 +37,7 @@ export default function Navbar() {
     { href: '/contact', label: 'Contacts' },
   ]
 
+  // Keep async logout from Supabase version
   const handleLogout = async () => {
     await logout()
     setDropOpen(false)
@@ -47,25 +49,27 @@ export default function Navbar() {
     ?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?'
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar${navHidden ? ' hidden' : ''}`}>
       <div className="nav-inner">
 
-        {/* LEFT - LOGO */}
+        {/* LEFT — Logo */}
         <div className="nav-left">
           <Link href="/">
-            <img src="/logo.png" alt="PetPals" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="PetPals" style={{ height: '80px', width: 'auto', display: 'block' }} />
           </Link>
         </div>
 
-        {/* CENTER - MENU */}
+        {/* CENTER — Nav Links */}
         <ul className="nav-links">
           {navLinks.map(link => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className={`nav-link ${pathname === link.href || pathname.startsWith(link.href + '/')
-                ? 'active'
-                : ''}`}
+                className={`nav-link ${
+                  pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href + '/'))
+                    ? 'active' : ''
+                }`}
               >
                 {link.label}
               </Link>
@@ -73,27 +77,38 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* RIGHT - AUTH */}
+        {/* RIGHT — Auth */}
         <div className="nav-auth">
           {user ? (
-            <div className="nav-user-wrap">
+            <div
+              className="nav-user-wrap"
+              onBlur={() => setTimeout(() => setDropOpen(false), 150)}
+            >
               <button
                 className="nav-user-pill"
                 onClick={() => setDropOpen(prev => !prev)}
               >
                 <div className="u-av">{initials}</div>
                 <span>{user.name.split(' ')[0]}</span>
-                <span className="arrow">▾</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '.7rem' }}>▾</span>
               </button>
 
               {dropOpen && (
                 <div className="nav-drop">
-                  <div className="drop-email">{user.email}</div>
-
-                  <Link href="/my-applications" className="drop-item">
+                  <div style={{ padding: '8px 12px 4px', fontSize: '.75rem', color: 'var(--text-dim)' }}>
+                    {user.email}
+                  </div>
+                  <hr className="drop-sep" />
+                  <Link href="/profile" className="drop-item" onClick={() => setDropOpen(false)}>
+                    👤 Profile
+                  </Link>
+                  <Link href="/profile/adoptions" className="drop-item" onClick={() => setDropOpen(false)}>
                     📋 My Applications
                   </Link>
-
+                  <Link href="/profile/favourites" className="drop-item" onClick={() => setDropOpen(false)}>
+                    🤍 Favourites
+                  </Link>
+                  <hr className="drop-sep" />
                   <button className="drop-item danger" onClick={handleLogout}>
                     🚪 Logout
                   </button>
@@ -102,12 +117,8 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login" className="btn-login">
-                Login
-              </Link>
-              <Link href="/register" className="btn-register">
-                Register
-              </Link>
+              <Link href="/login"    className="btn-login">Login</Link>
+              <Link href="/register" className="btn-register">Register</Link>
             </>
           )}
         </div>

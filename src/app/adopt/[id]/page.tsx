@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
+import ConfirmAdoptionModal from '@/components/ui/ConfirmAdoptionModal'
 import type { Pet, PetType } from '@/types'
 
 export default function AdoptPage() {
@@ -14,35 +15,31 @@ export default function AdoptPage() {
   const router   = useRouter()
   const { user } = useAuth()
   const { showToast } = useToast()
-  const [pet, setPet] = useState<Pet | null>(null)
-
-  const [loading,    setLoading]    = useState(false)
+  const [pet, setPet]           = useState<Pet | null>(null)
+  const [loading, setLoading]   = useState(false)
   const [motivation, setMotivation] = useState('')
-  const [expLevel,   setExpLevel]   = useState('')
+  const [jenis, setJenis]           = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [pendingData, setPendingData] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetchPet = async () => {
-      const routeId = String(id)
+      const routeId  = String(id)
       const supabase = createClient()
       const { data, error } = await supabase
         .from('pets')
-        .select('id, name, type, breed, age_years, status, description, image_url')
+        .select('id, name, type, breed, age_years, status, description, image_url, location')
         .eq('id', routeId)
         .single()
 
-      if (error || !data) {
-        setPet(null)
-        return
-      }
+      if (error || !data) { setPet(null); return }
 
       const normalizedType =
         data.type === 'Dog' || data.type === 'Cat' || data.type === 'Bird' || data.type === 'Reptile'
-          ? data.type
-          : 'Reptile'
+          ? data.type : 'Reptile'
       const status =
         data.status === 'Adopted' || data.status === 'In Process' || data.status === 'Available'
-          ? data.status
-          : 'Available'
+          ? data.status : 'Available'
 
       setPet({
         id: data.id,
@@ -52,7 +49,7 @@ export default function AdoptPage() {
         age: data.age_years != null ? `${data.age_years} years` : '-',
         gender: 'Unknown',
         weight: '-',
-        location: 'Unknown',
+        location: data.location ?? 'Unknown',
         status,
         vaccinated: false,
         neutered: false,
@@ -60,7 +57,6 @@ export default function AdoptPage() {
         desc: data.description ?? 'No description yet.',
       })
     }
-
     fetchPet()
   }, [id])
 
@@ -76,41 +72,43 @@ export default function AdoptPage() {
 
   if (!user) { router.replace('/login'); return null }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const form       = e.currentTarget
-    const fullName   = (form.elements.namedItem('fullName') as HTMLInputElement).value
-    const email      = (form.elements.namedItem('email') as HTMLInputElement).value
-    const phone      = (form.elements.namedItem('phone') as HTMLInputElement).value
-    const homeType   = (form.elements.namedItem('homeType') as HTMLSelectElement).value
-    const yard       = (form.querySelector('input[name="yard"]:checked') as HTMLInputElement)?.value
-    const houseSize  = (form.elements.namedItem('houseSize') as HTMLInputElement).value
-    const ownedBefore = (form.querySelector('input[name="ownedBefore"]:checked') as HTMLInputElement)?.value
-    const currentPets = (form.querySelector('input[name="currentPets"]:checked') as HTMLInputElement)?.value
-
+    const form = e.currentTarget
+    const data: Record<string, string> = {}
+    const homeType = (form.elements.namedItem('homeType') as HTMLSelectElement).value
     if (!homeType) { showToast('Pilih tipe rumah.', 'err'); return }
-    if (motivation.trim().length < 10) { showToast('Isi motivasi adopsi kamu.', 'err'); return }
+    if (motivation.trim().length < 5) { showToast('Isi motivasi adopsi kamu.', 'err'); return }
+    Array.from(form.elements).forEach(el => {
+      const input = el as HTMLInputElement
+      if (input.name && input.value) data[input.name] = input.value
+    })
+    data.motivation = motivation
+    data.jenis      = jenis
+    setPendingData(data)
+    setShowConfirm(true)
+  }
 
+  const handleConfirm = async () => {
+    setShowConfirm(false)
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
 
     const supabase = createClient()
-    const userId = user.id
-    const canInsertSupabase = Boolean(userId && pet.id)
+    const userId   = user.id
 
-    if (canInsertSupabase) {
+    if (userId && pet.id) {
       const { error } = await supabase
         .from('adoptions')
         .insert({
           user_id: userId,
-          pet_id: pet.id,
-          status: 'Pending',
-          note: motivation,
+          pet_id:  pet.id,
+          status:  'Pending',
+          note:    motivation,
         })
 
       if (!error) {
         showToast(`Pengajuan adopsi ${pet.name} berhasil! 🎉`, 'ok')
-        router.push('/my-applications')
+        router.push('/profile/adoptions')
         return
       }
     }
@@ -121,133 +119,145 @@ export default function AdoptPage() {
 
   return (
     <>
+      {showConfirm && (
+        <ConfirmAdoptionModal
+          onConfirm={handleConfirm}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
+
       <div className="page-wrapper">
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px 12px' }}>
-          <div className="breadcrumb">
-            <Link href="/">Home</Link>
-            <span>/</span>
-            <span>Apply for Adoption</span>
-          </div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '6px' }}>Apply for Adoption 🐾</h1>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '28px', fontSize: '.9rem' }}>Give a loving home to your new friend</p>
-        </div>
-
-        <div className="adopt-layout">
-          {/* Sidebar */}
-          <div>
-            <div className="adopt-pet-card">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={pet.img} alt={pet.name} className="adopt-pet-img" />
-              <div className="adopt-pet-body">
-                <div className="adopt-pet-name">Name: <strong>{pet.name}</strong></div>
-                <div className="adopt-pet-name">Location: <strong>{pet.location}</strong></div>
-                <div className="adopt-pet-name">Status: <strong>{pet.status}</strong></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Form */}
-          <form className="adopt-form-card" onSubmit={handleSubmit}>
-
-            {/* Personal Info */}
-            <div className="adopt-section">
-              <div className="adopt-section-title">Personal Information</div>
-              <div className="f-group">
-                <label className="f-label">Full Name *</label>
-                <input className="f-input" name="fullName" defaultValue={user.name} required />
-              </div>
-              <div className="f-group">
-                <label className="f-label">Email *</label>
-                <input className="f-input" name="email" type="email" defaultValue={user.email} required />
-              </div>
-              <div className="f-group">
-                <label className="f-label">Phone Number *</label>
-                <input className="f-input" name="phone" type="tel" placeholder="+62..." required />
+        <div style={{ background: 'var(--bg)', padding: '0 40px 48px' }}>
+          <div style={{
+            background: 'var(--bg-gray)', borderRadius: '16px', padding: '28px',
+            display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px',
+          }}>
+            {/* Pet Sidebar */}
+            <div>
+              <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={pet.img} alt={pet.name} style={{ width: '100%', height: '180px', objectFit: 'cover', background: '#e5e7eb' }} />
+                <div style={{ padding: '14px' }}>
+                  <p style={{ fontSize: '.85rem', color: 'var(--text-2)', marginBottom: '4px' }}>Nama : <strong>{pet.name}</strong></p>
+                  <p style={{ fontSize: '.85rem', color: 'var(--text-2)', marginBottom: '4px' }}>Location : <strong>{pet.location}</strong></p>
+                  <p style={{ fontSize: '.85rem', color: 'var(--text-2)' }}>Status : <strong>{pet.status}</strong></p>
+                </div>
               </div>
             </div>
 
-            {/* Home Info */}
-            <div className="adopt-section">
-              <div className="adopt-section-title">Home Information</div>
-              <div className="f-group">
-                <label className="f-label">Type of Home *</label>
-                <select className="f-select" name="homeType">
-                  <option value="">Choose one</option>
-                  <option value="House">House</option>
-                  <option value="Apartement">Apartement</option>
-                  <option value="Kos">Kos</option>
-                  <option value="Shared House">Shared House</option>
-                  <option value="Dormitory/Asrama">Dormitory/Asrama</option>
-                </select>
-              </div>
-              <div className="f-group">
-                <label className="f-label">Have a Yard? *</label>
-                <div className="radio-group">
-                  <label className="radio-chip"><input type="radio" name="yard" value="yes" /> Yes</label>
-                  <label className="radio-chip"><input type="radio" name="yard" value="no"  /> No</label>
-                </div>
-              </div>
-              <div className="f-group">
-                <label className="f-label">Household Size</label>
-                <input className="f-input" name="houseSize" type="number" min="1" placeholder="e.g. 3" />
-              </div>
-            </div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: '12px', border: '1px solid var(--border)', padding: '28px' }}>
 
-            {/* Pet Experience */}
-            <div className="adopt-section">
-              <div className="adopt-section-title">Pet Experience</div>
-              <div className="f-group">
-                <label className="f-label">Owned a pet before?</label>
-                <div className="radio-group">
-                  <label className="radio-chip"><input type="radio" name="ownedBefore" value="yes" /> Yes</label>
-                  <label className="radio-chip"><input type="radio" name="ownedBefore" value="no"  /> No</label>
+              {/* Personal Information */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '.95rem', fontWeight: 700, marginBottom: '16px' }}>Personal Information</h3>
+                <div className="f-group">
+                  <label className="f-label">Full name <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <input className="f-input" name="fullName" defaultValue={user.name} required />
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Email <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <input className="f-input" name="email" type="email" defaultValue={user.email} required />
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Phone Number <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <input className="f-input" name="phone" type="tel" placeholder="+62..." required />
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Adress <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <input className="f-input" name="address" placeholder="Your address" required />
                 </div>
               </div>
-              <div className="f-group">
-                <label className="f-label">Current pets?</label>
-                <div className="radio-group">
-                  <label className="radio-chip"><input type="radio" name="currentPets" value="yes" /> Yes</label>
-                  <label className="radio-chip"><input type="radio" name="currentPets" value="no"  /> No</label>
+
+              {/* Home Information */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '.95rem', fontWeight: 700, marginBottom: '16px' }}>Home Information</h3>
+                <div className="f-group">
+                  <label className="f-label">Type of Home <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <select className="f-select" name="homeType">
+                    <option value="">Choose one</option>
+                    <option value="House">House</option>
+                    <option value="Apartement">Apartement</option>
+                    <option value="Kos">Kos</option>
+                    <option value="Shared House">Shared House</option>
+                    <option value="Dormitory/Asrama">Dormitory/Asrama</option>
+                  </select>
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Rented House <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <div className="radio-group">
+                    <label className="radio-chip"><input type="radio" name="rentedHouse" value="yes" required /> Yes</label>
+                    <label className="radio-chip"><input type="radio" name="rentedHouse" value="no"  /> No</label>
+                  </div>
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Have a Yard <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <div className="radio-group">
+                    <label className="radio-chip"><input type="radio" name="yard" value="yes" required /> Yes</label>
+                    <label className="radio-chip"><input type="radio" name="yard" value="no"  /> No</label>
+                  </div>
                 </div>
               </div>
-              <div className="f-group">
-                <label className="f-label">Experience Level</label>
-                <div className="exp-btns">
-                  {['Beginner', 'Intermediate', 'Expert'].map(l => (
-                    <button key={l} type="button" className={`exp-btn ${expLevel === l ? 'active' : ''}`} onClick={() => setExpLevel(l)}>{l}</button>
+
+              {/* Pet Experience */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '.95rem', fontWeight: 700, marginBottom: '16px' }}>Pet Experience</h3>
+                <div className="f-group">
+                  <label className="f-label">Owned Pet Before <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <div className="radio-group">
+                    <label className="radio-chip"><input type="radio" name="ownedBefore" value="yes" required /> Yes</label>
+                    <label className="radio-chip"><input type="radio" name="ownedBefore" value="no"  /> No</label>
+                  </div>
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Have a Yard <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <div className="radio-group">
+                    <label className="radio-chip"><input type="radio" name="haveYard" value="yes" required /> Yes</label>
+                    <label className="radio-chip"><input type="radio" name="haveYard" value="no"  /> No</label>
+                  </div>
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Jenis <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <input className="f-input" placeholder="ketik disini" value={jenis} onChange={e => setJenis(e.target.value)} required />
+                </div>
+              </div>
+
+              {/* Adoption */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '.95rem', fontWeight: 700, marginBottom: '16px' }}>Adoption</h3>
+                <div className="f-group">
+                  <label className="f-label">Motivation <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <input className="f-input" placeholder="ketik disini" value={motivation} onChange={e => setMotivation(e.target.value)} required />
+                </div>
+                <div className="f-group">
+                  <label className="f-label">Ready for the maintenance costs? <span style={{ color: 'var(--red)' }}>*</span></label>
+                  <div className="radio-group">
+                    <label className="radio-chip"><input type="radio" name="maintenanceCosts" value="yes" required /> Yes</label>
+                    <label className="radio-chip"><input type="radio" name="maintenanceCosts" value="no"  /> No</label>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+                  {[
+                    'Saya berkomitmen merawat hewan dengan baik',
+                    'Tidak akan menelantarkan hewan',
+                    'Bersedia mengikuti aturan adopsi',
+                  ].map(text => (
+                    <label key={text} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '.85rem', color: 'var(--text-2)', cursor: 'pointer' }}>
+                      <input type="checkbox" required style={{ accentColor: 'var(--green)', width: '15px', height: '15px' }} />
+                      {text}
+                    </label>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Motivation */}
-            <div className="adopt-section">
-              <div className="adopt-section-title">Motivation</div>
-              <div className="f-group">
-                <textarea
-                  className="f-textarea" rows={4}
-                  placeholder="Why do you want to adopt this pet?"
-                  value={motivation}
-                  onChange={e => setMotivation(e.target.value)}
-                />
+              {/* Submit */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+                  {loading ? 'Submitting…' : 'Submit'}
+                </button>
               </div>
-              <div className="f-check">
-                <input type="checkbox" id="agree1" required />
-                <label htmlFor="agree1">I agree to take full responsibility for this pet</label>
-              </div>
-              <div className="f-check">
-                <input type="checkbox" id="agree2" required />
-                <label htmlFor="agree2">I agree to the adoption terms and conditions</label>
-              </div>
-            </div>
-
-            <div className="adopt-actions">
-              <button type="button" className="btn btn-secondary btn-lg" onClick={() => router.back()}>Cancel</button>
-              <button type="submit" className="btn btn-dark btn-lg" style={{ flex: 1 }} disabled={loading}>
-                {loading ? 'Submitting…' : 'Submit Application'}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
       <Footer />
