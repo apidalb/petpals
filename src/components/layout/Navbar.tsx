@@ -56,7 +56,7 @@ export default function Navbar() {
         <div className="nav-left">
           <Link href="/">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="PetPals" style={{ height: '80px', width: 'auto', display: 'block' }} />
+            <img src="/logo.png" alt="PetPals" style={{ height: '64px', width: 'auto', display: 'block' }} />
           </Link>
         </div>
 

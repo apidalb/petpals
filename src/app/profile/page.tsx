@@ -9,13 +9,15 @@ import Footer from '@/components/layout/Footer'
 import { PETS } from '@/lib/data'
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, authReady } = useAuth()
   const router   = useRouter()
 
   useEffect(() => {
+    if (!authReady) return
     if (!user) router.replace('/login')
-  }, [user, router])
+  }, [authReady, user, router])
 
+  if (!authReady) return null
   if (!user) return null
 
   // Mock favourites — 2 pets preview

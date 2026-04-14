@@ -29,17 +29,19 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AdoptionsPage() {
-  const { user } = useAuth()
+  const { user, authReady } = useAuth()
   const router   = useRouter()
   const [apps, setApps] = useState<Adoption[]>([])
 
   useEffect(() => {
+    if (!authReady) return
     if (!user) { router.replace('/login'); return }
     try {
       setApps(JSON.parse(localStorage.getItem('pp_apps') || '[]'))
     } catch {}
-  }, [user, router])
+  }, [authReady, user, router])
 
+  if (!authReady) return null
   if (!user) return null
 
   return (

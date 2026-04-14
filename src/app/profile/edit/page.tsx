@@ -8,15 +8,17 @@ import UserSidebar from '@/components/ui/UserSidebar'
 import Footer from '@/components/layout/Footer'
 
 export default function EditProfilePage() {
-  const { user, login } = useAuth()
+  const { user, authReady, login } = useAuth()
   const { showToast }   = useToast()
   const router          = useRouter()
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (!authReady) return
     if (!user) router.replace('/login')
-  }, [user, router])
+  }, [authReady, user, router])
 
+  if (!authReady) return null
   if (!user) return null
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

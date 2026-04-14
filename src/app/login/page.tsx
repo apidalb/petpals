@@ -148,12 +148,6 @@ export default function LoginPage() {
           </div>
          </div>
          </div>
-          {/* Demo hint */}
-          <div style={{ marginTop: '20px', padding: '12px', background: 'var(--bg-gray)', borderRadius: '8px', fontSize: '.75rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-            <strong style={{ color: 'var(--text-2)' }}>Demo:</strong><br />
-            Admin: admin@petpals.id / admin123<br />
-            User: user@petpals.id / user123
-          </div>
       </div>
 
       {/* Image side */}

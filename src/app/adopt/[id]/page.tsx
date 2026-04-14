@@ -13,7 +13,7 @@ import type { Pet, PetType } from '@/types'
 export default function AdoptPage() {
   const { id }   = useParams()
   const router   = useRouter()
-  const { user } = useAuth()
+  const { user, authReady } = useAuth()
   const { showToast } = useToast()
   const [pet, setPet]           = useState<Pet | null>(null)
   const [loading, setLoading]   = useState(false)
@@ -24,11 +24,15 @@ export default function AdoptPage() {
 
   useEffect(() => {
     const fetchPet = async () => {
-      const routeId  = String(id)
+      const routeId = Array.isArray(id) ? id[0] : id
+      if (!routeId) {
+        setPet(null)
+        return
+      }
       const supabase = createClient()
       const { data, error } = await supabase
         .from('pets')
-        .select('id, name, type, breed, age_years, status, description, image_url, location')
+        .select('id, name, type, breed, age_years, status, description, image_url')
         .eq('id', routeId)
         .single()
 
@@ -49,7 +53,7 @@ export default function AdoptPage() {
         age: data.age_years != null ? `${data.age_years} years` : '-',
         gender: 'Unknown',
         weight: '-',
-        location: data.location ?? 'Unknown',
+        location: 'Unknown',
         status,
         vaccinated: false,
         neutered: false,
@@ -59,6 +63,13 @@ export default function AdoptPage() {
     }
     fetchPet()
   }, [id])
+
+  useEffect(() => {
+    if (!authReady) return
+    if (!user) router.replace('/login')
+  }, [authReady, user, router])
+
+  if (!authReady) return null
 
   if (!pet) return (
     <div className="page-wrapper">
@@ -70,7 +81,7 @@ export default function AdoptPage() {
     </div>
   )
 
-  if (!user) { router.replace('/login'); return null }
+  if (!user) return null
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

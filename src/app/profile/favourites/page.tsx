@@ -10,16 +10,18 @@ import { PETS } from '@/lib/data'
 import type { Pet } from '@/types'
 
 export default function FavouritesPage() {
-  const { user } = useAuth()
+  const { user, authReady } = useAuth()
   const router   = useRouter()
   const [favs, setFavs] = useState<Pet[]>([])
 
   useEffect(() => {
+    if (!authReady) return
     if (!user) { router.replace('/login'); return }
     // Mock: show first 3 pets as favourites
     setFavs(PETS.slice(0, 3))
-  }, [user, router])
+  }, [authReady, user, router])
 
+  if (!authReady) return null
   if (!user) return null
 
   return (

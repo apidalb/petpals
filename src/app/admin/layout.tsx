@@ -11,15 +11,17 @@ const NAV = [
 ]
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, authReady } = useAuth()
   const router   = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
+    if (!authReady) return
     if (user && user.role !== 'admin') router.replace('/')
     if (!user) router.replace('/login')
-  }, [user, router])
+  }, [authReady, user, router])
 
+  if (!authReady) return null
   if (!user || user.role !== 'admin') return null
 
   return (

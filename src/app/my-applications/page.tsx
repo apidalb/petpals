@@ -19,7 +19,7 @@ function statusLabel(s: string) {
 }
 
 export default function MyApplicationsPage() {
-  const { user } = useAuth()
+  const { user, authReady } = useAuth()
   const [apps, setApps] = useState<Adoption[]>([])
 
   useEffect(() => {
@@ -75,6 +75,8 @@ export default function MyApplicationsPage() {
 
     loadApps()
   }, [user?.id])
+
+  if (!authReady) return null
 
   if (!user) {
     return (
