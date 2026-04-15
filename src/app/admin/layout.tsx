@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, type ReactNode } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import Footer from '@/components/layout/Footer'
 
 const NAV = [
   { href: '/admin',           icon: '📊', label: 'Dashboard'  },
@@ -24,21 +25,30 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (!authReady) return null
   if (!user || user.role !== 'admin') return null
 
-  return (
-    <div className="page-wrapper">
+return (
+  <div className="page-wrapper">
+    <div className="admin-container">
       <div className="admin-wrapper">
         <aside className="admin-sidebar">
           <div className="admin-sidebar-label">Admin Panel</div>
           <nav>
             {NAV.map(n => (
-              <Link key={n.href} href={n.href} className={`admin-nav-item ${pathname === n.href ? 'active' : ''}`}>
+              <Link
+                key={n.href}
+                href={n.href}
+                className={`admin-nav-item ${pathname === n.href ? 'active' : ''}`}
+              >
                 <span>{n.icon}</span> {n.label}
               </Link>
             ))}
           </nav>
-        </aside>
-        <div className="admin-content">{children}</div>
+          </aside>
+        <div className="admin-content">
+          {children}
+        </div>
       </div>
     </div>
-  )
+    <Footer />
+  </div>
+)
 }
