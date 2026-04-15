@@ -4,12 +4,24 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Adoption } from '@/types'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
 
 export default function AdminDashboardPage() {
   const [apps, setApps] = useState<Adoption[]>([])
   const [totalAnimals, setTotalAnimals] = useState(0)
   const [available, setAvailable] = useState(0)
   const [adopted, setAdopted] = useState(0)
+  const { user, authReady } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+  if (!authReady) return
+
+  if (!user || user.role !== 'admin') {
+    router.replace('/') 
+  }
+}, [user, authReady, router])
 
   useEffect(() => {
     try { setApps(JSON.parse(localStorage.getItem('pp_apps') || '[]')) } catch {}
@@ -49,59 +61,57 @@ export default function AdminDashboardPage() {
   const recentApps = apps.slice(0, 5)
 
   return (
-    <>
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--white)', letterSpacing: '-0.03em', marginBottom: '4px' }}>Dashboard</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '.875rem' }}>Overview platform PetPALS</p>
-      </div>
+  <div className="admin-content fade-in">
+    
+    <div className="dashboard-header">
+      <h1>Dashboard</h1>
+      <p>Overview platform PetPALS</p>
+    </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '32px' }}>
-        {stats.map(s => (
-          <div key={s.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '20px' }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '12px' }}>{s.icon}</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: s.color, letterSpacing: '-0.03em', lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: '.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>{s.label}</div>
+    
+    <div className="stats-grid">
+      {stats.map((s) => (
+        <div key={s.label} className="stat-card">
+          <div className="stat-icon">{s.icon}</div>
+          <div className="stat-value" style={{ color: s.color }}>
+            {s.value}
           </div>
-        ))}
-      </div>
-
-      {/* Recent Adoptions */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--white)', letterSpacing: '-0.02em' }}>Recent Adoption Requests</h2>
-          <Link href="/admin/adoptions" style={{ fontSize: '.8rem', color: 'var(--teal)' }}>View All →</Link>
+          <div className="stat-label">{s.label}</div>
         </div>
+      ))}
+    </div>
 
-        {recentApps.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '.875rem' }}>
-            📋 Belum ada pengajuan adopsi.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {recentApps.map(app => (
-              <div key={app.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px', borderRadius: '10px', background: 'var(--bg-card-2)' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={app.petImg} alt={app.petName} style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '.875rem', fontWeight: 600, color: 'var(--white)' }}>{app.petName}</div>
-                  <div style={{ fontSize: '.78rem', color: 'var(--text-muted)' }}>
-                    {new Date(app.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
-                </div>
-                <span style={{
-                  padding: '3px 10px', borderRadius: '20px', fontSize: '.72rem', fontWeight: 700,
-                  background: app.status === 'Approved' ? 'var(--teal-pale)' : app.status === 'Rejected' ? 'rgba(248,113,113,.1)' : 'rgba(251,191,36,.1)',
-                  color: app.status === 'Approved' ? 'var(--teal)' : app.status === 'Rejected' ? 'var(--red)' : 'var(--yellow)',
-                  border: `1px solid ${app.status === 'Approved' ? 'rgba(74,222,128,.2)' : app.status === 'Rejected' ? 'rgba(248,113,113,.2)' : 'rgba(251,191,36,.2)'}`,
-                }}>
-                  {app.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+    
+    <div className="card">
+      <div className="card-header">
+        <h2>Recent Adoption Requests</h2>
+        <Link href="/admin/adoptions">See all →</Link>
       </div>
-    </>
-  )
+
+      {recentApps.length === 0 ? (
+        <div className="empty">📋 Belum ada pengajuan adopsi</div>
+      ) : (
+        <div className="adoption-list">
+          {recentApps.map((app) => (
+            <div key={app.id} className="adoption-item">
+              <img src={app.petImg} alt={app.petName} />
+
+              <div className="info">
+                <div className="name">{app.petName}</div>
+                <div className="meta">
+                  {new Date(app.date).toLocaleDateString("id-ID")}
+                </div>
+              </div>
+
+              <span className={`status ${app.status.toLowerCase()}`}>
+                {app.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+)
 }
