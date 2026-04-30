@@ -46,11 +46,16 @@ export default function RegisterPage() {
         return
       }
 
+      const emailRedirectTo = `${window.location.origin}/auth/confirm`
+
       const { data, error: signUpError } = await withTimeout(
         supabase.auth.signUp({
           email,
           password: pass,
-          options: { data: { full_name: name } },
+          options: {
+            data: { full_name: name },
+            emailRedirectTo,
+          },
         })
       )
 

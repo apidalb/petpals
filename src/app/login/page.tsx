@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -31,6 +31,14 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false)
   const [showPass, setShowPass] = useState(false)
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('confirmed') === '1') {
+      showToast('Email berhasil diverifikasi. Silakan login.', 'ok')
+      window.history.replaceState({}, '', '/login')
+    }
+  }, [showToast])
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
@@ -48,6 +56,8 @@ export default function LoginPage() {
       if (signInError || !data.user) {
         if (signInError?.code === 'email_provider_disabled') {
           setError('Login email/password belum aktif di Supabase (Auth > Providers > Email).')
+        } else if (signInError?.code === 'email_not_confirmed' || /confirm/i.test(signInError?.message || '')) {
+          setError('Email belum diverifikasi. Cek inbox dan klik link konfirmasi dari Supabase.')
         } else if (signInError?.message) {
           setError(signInError.message)
         } else {
